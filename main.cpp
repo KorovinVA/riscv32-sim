@@ -7,7 +7,7 @@ int main(int argc, char* argv[])
 {
     if(argc != 2)
     {
-        std::cerr << "USAGE: ./riscv32-sim path-to-elf" << std::endl;
+        std::cerr << "USAGE: " << argv[0] << " path-to-elf" << std::endl;
         exit(1);
     }
 

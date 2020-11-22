@@ -10,9 +10,9 @@
 class ReadElf
 {
 public:
-	ReadElf(const char* elf);
+    ReadElf(const char* elf);
 private:
-	FILE* m_elf;
+    FILE* m_elf;
 };
 
-#endif
+#endif //READELF_H
