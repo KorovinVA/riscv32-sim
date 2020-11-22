@@ -1,0 +1,6 @@
+#tests
+tests/
+
+#build files
+riscv32-sim
+*.o
