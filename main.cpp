@@ -2,6 +2,8 @@
 #include <stdlib.h>
 
 #include "readelf.h"
+#include "memory.h"
+#include "kernel.h"
 
 int main(int argc, char* argv[])
 {
@@ -13,7 +15,10 @@ int main(int argc, char* argv[])
 
     try
     {
-        ReadElf Elf(argv[1]);
+        ElfReader Elf(argv[1]);
+        Memory Mem(Elf.getEntry(), Elf.getRawData());
+        Kernel Unit(&Mem);
+        //Unit.Run();
     }
     catch(const std::string &str)
     {

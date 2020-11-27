@@ -1,87 +1,98 @@
 #include "readelf.h"
 
-ReadElf::ReadElf(const char* elf):
-    m_err("ELF ERROR: "),
-    m_sections(),
-    m_strtable()
+ElfReader::ElfReader(const char* elf) :
+    phdrs(),
+    data()
 {
+    if (elf_version(EV_CURRENT ) == EV_NONE)
+    {
+        throw std::string("ELF library version problem");
+    }
+
     OpenElf(elf);
     ReadHeader();
+    LoadPHdrs();
+    LoadData();
+}
 
-    for(int i = 0; i < m_ehdr.e_shnum; ++i)
+
+void ElfReader::OpenElf(const char* elf)
+{
+    elfFd = open(elf, O_RDONLY, 0);
+    if(elfFd < 0)
     {
-        SaveSection(i);
+        throw std::string(std::strerror(errno));
+    }
+    elfData = elf_begin(elfFd, ELF_C_READ, NULL);
+}
+
+void ElfReader::ReadHeader()
+{
+    if(gelf_getehdr(elfData, &ehdr) == NULL) 
+    {
+        throw std::string(elf_errmsg(-1));
+    }
+    entry = ehdr.e_entry;
+}
+
+void ElfReader::LoadPHdrs()
+{
+    size_t phNum = 0;
+    if(elf_getphdrnum(elfData, &phNum) != 0)
+    {
+        throw std::string(elf_errmsg(-1));
     }
 
-    NameSections();
-}
-
-ReadElf::~ReadElf()
-{
-    fclose(m_elf);
-}
-
-void ReadElf::OpenElf(const char* elf)
-{
-    m_elf = fopen(elf, "rb");
-    if(!m_elf)
+    GElf_Phdr phdr;
+    for (size_t i = 0; i < phNum; ++i) 
     {
-        throw m_err + std::string(std::strerror(errno));
-    }
-}
-
-void ReadElf::ReadHeader()
-{
-    fread(&m_ehdr, sizeof(m_ehdr), 1, m_elf);
-    if(m_ehdr.e_machine != EM_RISCV)
-    {
-        throw m_err + "only riscv is supported";
-    }
-}
-
-void ReadElf::SaveSection(int secNum)
-{
-    std::unique_ptr<Section> sec(new Section);
-
-    fseek(m_elf, m_ehdr.e_shoff + secNum * sizeof(sec->m_shdr), SEEK_SET);
-    fread(&(sec->m_shdr), 1, sizeof(sec->m_shdr), m_elf);
-    
-    sec->m_data = calloc(1, sec->m_shdr.sh_size);
-    fseek(m_elf, sec->m_shdr.sh_offset, SEEK_SET);
-    fread(sec->m_data, 1, sec->m_shdr.sh_size, m_elf);
-
-    m_sections.push_back(std::move(sec));
-}
-
-void ReadElf::NameSections()
-{
-    for(auto it = m_sections.rbegin(); it != m_sections.rend(); ++it)
-    {
-        Section* sec = it->get();
-
-        //Section holds a string table
-        if(sec->m_shdr.sh_type == SHT_STRTAB)
+        if (gelf_getphdr(elfData, i, &phdr) != &phdr)
         {
-            for(int i = 0; i < sec->m_shdr.sh_size; ++i)
-            {
-                m_strtable.push_back(*((char*)(sec->m_data) + i));
-            }
+            throw std::string(elf_errmsg(-1));
         }
+        phdrs.push_back(phdr);
     }
-
-    for(auto it = m_sections.begin(); it != m_sections.end(); ++it)
-    {
-        Section* sec = it->get();
-        sec->name = m_strtable.data() + sec->m_shdr.sh_name;
-    }
-
-    //for(auto it = m_sections.begin(); it != m_sections.end(); ++it)
-    //{
-        //Section* sec = it->get();
-        //std::cout << sec->name << std::endl;
-    //}
 }
 
-void ReadElf::Disassembly()
+void ElfReader::LoadData()
 {
+    auto maxSegment = *std::max_element(phdrs.begin(), phdrs.end(), 
+                                        [](GElf_Phdr a, GElf_Phdr b)
+                                            { return a.p_vaddr + a.p_memsz < b.p_vaddr + b.p_memsz; }
+                                        );
+    size_t maxVecSize = maxSegment.p_vaddr + maxSegment.p_memsz;
+    data.resize(maxVecSize);
+
+    for (int i = 0; i < phdrs.size(); ++i)
+    {
+        void* segment = calloc(1, phdrs[i].p_memsz);
+
+        lseek(elfFd, phdrs[i].p_offset, SEEK_SET);
+        if(read(elfFd, segment, phdrs[i].p_memsz) < 0)
+        {
+            throw std::string(std::strerror(errno));
+        }
+
+        for(int j = 0; j < phdrs[i].p_memsz; ++j)
+        {
+            data[phdrs[i].p_paddr + j] = *((uint8_t*)segment + j);
+        }
+        free(segment);
+    }
+}
+
+std::vector<uint8_t>* ElfReader::getRawData()
+{
+    return &data;
+}
+
+uint32_t ElfReader::getEntry()
+{
+    return entry;
+}
+
+ElfReader::~ElfReader()
+{
+    elf_end(elfData);
+    close(elfFd);
 }
