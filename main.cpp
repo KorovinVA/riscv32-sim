@@ -11,6 +11,14 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
-    ReadElf Elf(argv[1]);
+    try
+    {
+        ReadElf Elf(argv[1]);
+    }
+    catch(const std::string &str)
+    {
+        std::cerr << str << std::endl;
+        exit(1);
+    }
     return 0;
 }
