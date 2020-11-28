@@ -2,7 +2,7 @@
 #define KERNEL_H
 
 #include "memory.h"
-#include "decoder.h"
+#include "instruction.h"
 
 class Kernel
 {

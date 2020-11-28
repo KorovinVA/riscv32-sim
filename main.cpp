@@ -18,7 +18,7 @@ int main(int argc, char* argv[])
         ElfReader Elf(argv[1]);
         Memory Mem(Elf.getEntry(), Elf.getRawData());
         Kernel Unit(&Mem);
-        //Unit.Run();
+        Unit.Run();
     }
     catch(const std::string &str)
     {

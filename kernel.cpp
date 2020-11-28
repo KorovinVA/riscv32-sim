@@ -3,7 +3,13 @@
 Kernel::Kernel(Memory* memory, bool tracing):
     trEn(tracing)
 {
-    mem  = memory;
+    mem = memory;
+
+}
+
+void Kernel::Run()
+{
+    Instruction insn(mem->PullNextInsn());
 }
 
 Kernel::~Kernel()
