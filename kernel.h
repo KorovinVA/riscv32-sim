@@ -1,6 +1,10 @@
 #ifndef KERNEL_H
 #define KERNEL_H
 
+#include <fstream>
+#include <map>
+#include <memory>
+
 #include "memory.h"
 #include "instruction.h"
 
@@ -10,9 +14,15 @@ public:
     Kernel(Memory* memory, bool tracing = false);
     ~Kernel();
     void Run();
-private:
+
     Memory* mem;
-    bool trEn;
+private:
+    void DumpExecInsn(Instruction* insn);
+    void DumpChangedReg(Instruction* insn);
+
+    std::map<uint32_t, std::unique_ptr<Instruction>> executed;
+    const bool trEn;
+    std::ofstream state;
 };
 
 #endif //KERNEL_H

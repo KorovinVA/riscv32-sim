@@ -1,7 +1,7 @@
 all: hello
 
-hello: main.o readelf.o memory.o kernel.o instruction.o
-	g++ main.o readelf.o memory.o kernel.o instruction.o -lelf -o riscv32-sim
+hello: main.o readelf.o memory.o kernel.o instruction.o functions.o
+	g++ main.o readelf.o memory.o kernel.o instruction.o functions.o -lelf -o riscv32-sim
 
 main.o: main.cpp
 	g++ -c main.cpp
@@ -17,6 +17,9 @@ kernel.o: kernel.cpp
 
 instruction.o: instruction.cpp
 	g++ -c instruction.cpp
+
+functions.o: functions.cpp
+	g++ -c functions.cpp
 
 clean:
 	rm -rf *.o riscv32-sim

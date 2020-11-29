@@ -4,3 +4,6 @@ tests/
 #build files
 riscv32-sim
 *.o
+
+#debug files
+*.state
