@@ -32,7 +32,7 @@ void Func::JALR(Memory* mem, Instruction* insn)
     uint32_t jump = mem->getReg(insn->getRs1()) + insn->getImm();
     jump <<= 1;
     jump >>= 1;
-
+    
     mem->setReg(insn->getRd(), mem->getPc() + 4);
     mem->setPc(jump);
 }
@@ -47,6 +47,13 @@ void Func::LW(Memory* mem, Instruction* insn)
 void Func::SUB(Memory* mem, Instruction* insn)
 {
     uint32_t res = mem->getReg(insn->getRs1()) - mem->getReg(insn->getRs2());
+    mem->setReg(insn->getRd(), res);
+    mem->setPc(mem->getPc() + 4);
+}
+
+void Func::SRLI(Memory* mem, Instruction* insn)
+{
+    uint32_t res = mem->getReg(insn->getRs1()) >> insn->getImm();
     mem->setReg(insn->getRd(), res);
     mem->setPc(mem->getPc() + 4);
 }

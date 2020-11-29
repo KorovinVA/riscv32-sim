@@ -13,6 +13,7 @@ namespace Func
     void JALR (Memory* mem, Instruction* insn);
     void LW   (Memory* mem, Instruction* insn);
     void SUB  (Memory* mem, Instruction* insn);
+    void SRLI (Memory* mem, Instruction* insn);
 }
 
 #endif //FUNCTIONS_H

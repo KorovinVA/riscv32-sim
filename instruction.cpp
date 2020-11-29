@@ -109,6 +109,19 @@ Instruction::Instruction(uint32_t raw, uint32_t pc) :
             name << "addi " << getRName(rd) << ", " << 
                 getRName(rs1) << ", " << std::dec << (int)imm;
         }
+        else if(getBits(data, 14, 12) == 0x5)
+        {
+            opcode = ISA::OP::SRLI;
+            type   = ISA::TYPE::I;
+
+            rd     = getBits(data, 11, 7);
+            rs1    = getBits(data, 19, 15);
+            imm    = getBits(data, 24, 20);
+
+            process = &Func::SRLI;
+            name << "srli " << getRName(rd) << ", " << 
+                getRName(rs1) << ", 0x" << imm;
+        }
         else if(getBits(data, 14, 12) == 0x7)
         {
             opcode = ISA::OP::ANDI;

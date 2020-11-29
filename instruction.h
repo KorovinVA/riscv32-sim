@@ -19,6 +19,7 @@ namespace ISA
         ANDI,
         LW,
         SUB,
+        SRLI,
         INVALID
     };
 
