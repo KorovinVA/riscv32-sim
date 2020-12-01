@@ -53,7 +53,6 @@ void Memory::store(uint32_t addr, uint32_t val, uint8_t size)
     if(size == 4)
     {
         addr = addr / 4;
-        std::cout << addr << std::endl;
         uint32_t* memory = (uint32_t*)(data.data());
         memory[addr] = val;
     }
