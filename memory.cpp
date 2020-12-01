@@ -7,6 +7,9 @@ Memory::Memory(uint32_t entry, std::vector<uint8_t>* rawData) :
 {
     data.resize(rawData->size());
     memcpy(&(data[0]), (void*)(rawData->data()), rawData->size());
+
+    //Stack pointer, seems wrong :(
+    ax[2] =  entry;
 }
 
 uint32_t Memory::PullNextInsn() const
@@ -45,6 +48,22 @@ uint32_t Memory::load(uint32_t addr, uint8_t size) const
     return -1;
 }
 
+void Memory::store(uint32_t addr, uint32_t val, uint8_t size)
+{
+    if(size == 4)
+    {
+        addr = addr / 4;
+        std::cout << addr << std::endl;
+        uint32_t* memory = (uint32_t*)(data.data());
+        memory[addr] = val;
+    }
+    else
+    {
+        throw std::string("Unknown store size");
+    }
+}
+
+
 void Memory::setPc(uint32_t nPc)
 {
     pc = nPc;
@@ -57,7 +76,10 @@ void Memory::setReg(uint32_t dst, uint32_t val)
     {
         throw std::string("Trying to write in invalid register");
     }
-    ax[dst] = val;
+    if(dst != 0)
+    {
+        ax[dst] = val;
+    }
 }
 
 Memory::~Memory()

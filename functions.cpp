@@ -57,3 +57,73 @@ void Func::SRLI(Memory* mem, Instruction* insn)
     mem->setReg(insn->getRd(), res);
     mem->setPc(mem->getPc() + 4);
 }
+
+void Func::SW(Memory* mem, Instruction* insn)
+{
+    uint32_t addr = insn->getImm() + mem->getReg(insn->getRs1());
+    mem->store(addr, mem->getReg(insn->getRs2()), 4);
+    mem->setPc(mem->getPc() + 4);
+}
+
+void Func::LUI(Memory* mem, Instruction* insn)
+{
+    uint32_t res = insn->getImm() << 12;
+    mem->setReg(insn->getRd(), res);
+    mem->setPc(mem->getPc() + 4);
+}
+
+void Func::BEQ(Memory* mem, Instruction* insn)
+{
+    if(mem->getReg(insn->getRs1()) == mem->getReg(insn->getRs2()))
+    {
+        mem->setPc(mem->getPc() + insn->getImm());
+    }
+    else
+    {
+        mem->setPc(mem->getPc() + 4);
+    }
+}
+
+void Func::SLLI(Memory* mem, Instruction* insn)
+{
+    uint32_t res = mem->getReg(insn->getRs1()) << insn->getImm();
+    mem->setReg(insn->getRd(), res);
+    mem->setPc(mem->getPc() + 4);
+}
+
+void Func::ADD(Memory* mem, Instruction* insn)
+{
+    uint32_t res = mem->getReg(insn->getRs1()) + mem->getReg(insn->getRs2());
+    mem->setReg(insn->getRd(), res);
+    mem->setPc(mem->getPc() + 4);
+}
+
+void Func::BNE(Memory* mem, Instruction* insn)
+{
+    if(mem->getReg(insn->getRs1()) != mem->getReg(insn->getRs2()))
+    {
+        mem->setPc(mem->getPc() + insn->getImm());
+    }
+    else
+    {
+        mem->setPc(mem->getPc() + 4);
+    }
+}
+
+void Func::ECALL(Memory* mem, Instruction* insn)
+{
+    mem->setPc(mem->getPc() + 4);
+}
+
+void Func::SLTU(Memory* mem, Instruction* insn)
+{
+    if(mem->getReg(insn->getRs1()) < mem->getReg(insn->getRs2()))
+    {
+        mem->setReg(insn->getRd(), 1);
+    }
+    else
+    {
+        mem->setReg(insn->getRd(), 0);
+    }
+    mem->setPc(mem->getPc() + 4);
+}

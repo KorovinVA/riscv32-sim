@@ -18,7 +18,7 @@ Kernel::Kernel(Memory* memory, bool tracing):
 
 void Kernel::Run()
 {
-    for(int i = 0; i < 28; ++i)
+    for(int i = 0; i < 100; ++i)
     {
         if(executed.count(mem->getPc()) <= 0)
         {

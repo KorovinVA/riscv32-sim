@@ -14,6 +14,14 @@ namespace Func
     void LW   (Memory* mem, Instruction* insn);
     void SUB  (Memory* mem, Instruction* insn);
     void SRLI (Memory* mem, Instruction* insn);
+    void SW   (Memory* mem, Instruction* insn);
+    void LUI  (Memory* mem, Instruction* insn);
+    void BEQ  (Memory* mem, Instruction* insn);
+    void SLLI (Memory* mem, Instruction* insn);
+    void ADD  (Memory* mem, Instruction* insn);
+    void BNE  (Memory* mem, Instruction* insn);
+    void ECALL(Memory* mem, Instruction* insn);
+    void SLTU (Memory* mem, Instruction* insn);
 }
 
 #endif //FUNCTIONS_H

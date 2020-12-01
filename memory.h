@@ -19,6 +19,7 @@ public:
     uint32_t getReg(uint32_t num) const;
     uint32_t load(uint32_t addr, uint8_t size) const;
 
+    void     store(uint32_t addr, uint32_t val, uint8_t size);
     void     setPc(uint32_t nPc);
     void     setReg(uint32_t dst, uint32_t val);
 private:

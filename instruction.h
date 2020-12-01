@@ -12,6 +12,7 @@ namespace ISA
 {
     enum class OP
     {
+        ADD,
         JAL,
         JALR,
         AUIPC,
@@ -20,6 +21,13 @@ namespace ISA
         LW,
         SUB,
         SRLI,
+        SLLI,
+        SW,
+        LUI,
+        BEQ,
+        BNE,
+        ECALL,
+        SLTU,
         INVALID
     };
 
