@@ -20,23 +20,22 @@ void Kernel::Run()
 {
     for(int i = 0; i < 180000; ++i)
     {
-        bool isPrint = false;
         if(executed.count(mem->getPc()) <= 0)
         {
+            //Instruction hasn't been decoded yet
             std::unique_ptr<Instruction> unInsn(new Instruction(mem->PullNextInsn(), mem->getPc()));
             executed.insert(std::pair<uint32_t, std::unique_ptr<Instruction>>(mem->getPc(), std::move(unInsn)));
-            isPrint = true;
         }
         Instruction* insn = executed[mem->getPc()].get();
 
-        if(trEn && isPrint)
+        if(trEn)
         {
             DumpExecInsn(insn);
         }
 
         insn->process(mem, insn);
-
-        if(trEn && isPrint)
+        
+        if(trEn)
         {
             DumpChangedReg(insn);
         }
@@ -50,8 +49,11 @@ void Kernel::DumpExecInsn(Instruction* insn)
 
 void Kernel::DumpChangedReg(Instruction* insn)
 {
-    state << std::hex << "\t" << insn->getRName(insn->getRd()) << " = " << "0x" <<
-        std::setw(8) << std::setfill('0') << mem->getReg(insn->getRd()) << std::endl;
+    if(insn->getRd() != 0)
+    {
+        state << std::hex << "\t" << insn->getRName(insn->getRd()) << " = " << "0x" <<
+            std::setw(8) << std::setfill('0') << mem->getReg(insn->getRd()) << std::endl;
+    }
 }
 
 Kernel::~Kernel()

@@ -13,23 +13,33 @@ namespace ISA
     enum class OP
     {
         ADD,
+        OR,
+        AND,
         JAL,
         JALR,
         AUIPC,
         ADDI,
+        XORI,
         ANDI,
         LW,
+        LBU,
         SUB,
         SRLI,
         SLLI,
+        SB,
         SW,
         LUI,
         BEQ,
         BNE,
+        BLT,
+        BGE,
         BLTU,
         BGEU,
         ECALL,
         SLTU,
+        DIVU,
+        MUL,
+        AMOSWAP,
         INVALID
     };
 

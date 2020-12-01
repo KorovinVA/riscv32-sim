@@ -1,5 +1,6 @@
 #tests
 tests/
+*.out
 
 #build files
 riscv32-sim

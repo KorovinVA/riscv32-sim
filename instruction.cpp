@@ -106,10 +106,11 @@ Instruction::Instruction(uint32_t raw, uint32_t pc) :
     }
     else if(getBits(data, 6, 0) == 0x13)
     {
+        type   = ISA::TYPE::I;
+
         if(getBits(data, 14, 12) == 0x0)
         {
             opcode = ISA::OP::ADDI;
-            type   = ISA::TYPE::I;
 
             rd     = getBits(data, 11, 7);
             rs1    = getBits(data, 19, 15);
@@ -120,36 +121,22 @@ Instruction::Instruction(uint32_t raw, uint32_t pc) :
             name << "addi " << getRName(rd) << ", " << 
                 getRName(rs1) << ", " << std::dec << (int)imm;
         }
-        else if(getBits(data, 14, 12) == 0x5)
+        else if(getBits(data, 14, 12) == 0x4)
         {
-            opcode = ISA::OP::SRLI;
-            type   = ISA::TYPE::I;
+            opcode = ISA::OP::XORI;
 
             rd     = getBits(data, 11, 7);
             rs1    = getBits(data, 19, 15);
-            imm    = getBits(data, 24, 20);
+            imm    = getBits(data, 31, 20);
+            extendImm(11);
 
-            process = &Func::SRLI;
-            name << "srli " << getRName(rd) << ", " << 
-                getRName(rs1) << ", 0x" << imm;
-        }
-        else if(getBits(data, 14, 12) == 0x1)
-        {
-            opcode = ISA::OP::SLLI;
-            type   = ISA::TYPE::I;
-
-            rd     = getBits(data, 11, 7);
-            rs1    = getBits(data, 19, 15);
-            imm    = getBits(data, 24, 20);
-
-            process = &Func::SLLI;
-            name << "slli " << getRName(rd) << ", " << 
-                getRName(rs1) << ", 0x" << imm;
+            process = &Func::XORI;
+            name << "xori " << getRName(rd) << ", " << 
+                getRName(rs1) << ", " << std::dec << (int)imm;
         }
         else if(getBits(data, 14, 12) == 0x7)
         {
             opcode = ISA::OP::ANDI;
-            type   = ISA::TYPE::I;
 
             rd     = getBits(data, 11, 7);
             rs1    = getBits(data, 19, 15);
@@ -160,9 +147,33 @@ Instruction::Instruction(uint32_t raw, uint32_t pc) :
             name << "andi " << getRName(rd) << ", " << 
                 getRName(rs1) << ", " << std::dec << int(imm);
         }
+        else if(getBits(data, 14, 12) == 0x1 && getBits(data, 31, 25) == 0x0)
+        {
+            opcode = ISA::OP::SLLI;
+
+            rd     = getBits(data, 11, 7);
+            rs1    = getBits(data, 19, 15);
+            imm    = getBits(data, 24, 20);
+
+            process = &Func::SLLI;
+            name << "slli " << getRName(rd) << ", " << 
+                getRName(rs1) << ", 0x" << imm;
+        }
+        else if(getBits(data, 14, 12) == 0x5 && getBits(data, 31, 25) == 0x0)
+        {
+            opcode = ISA::OP::SRLI;
+
+            rd     = getBits(data, 11, 7);
+            rs1    = getBits(data, 19, 15);
+            imm    = getBits(data, 24, 20);
+
+            process = &Func::SRLI;
+            name << "srli " << getRName(rd) << ", " << 
+                getRName(rs1) << ", 0x" << imm;
+        }
         else
         {
-            name << "Unkown Logical Instruction: " + std::to_string(data);
+            name << "Unkown Logical Instruction: " + std::to_string(getBits(data, 14, 12));
             throw name.str();
         }
     }
@@ -179,14 +190,22 @@ Instruction::Instruction(uint32_t raw, uint32_t pc) :
             opcode = ISA::OP::LW;
             process = &Func::LW;
 
-            name << "lw " << getRName(rd) << ", " << std::dec << (int)imm << "(" <<
-                getRName(rs1) << ")";
+            name << "lw ";
+        }
+        else if(getBits(data, 14, 12) == 0x4)
+        {
+            opcode = ISA::OP::LBU;
+            process = &Func::LBU;
+
+            name << "lbu ";
         }
         else
         {
             name << "Unkown Load Instruction: " + std::to_string(getBits(data, 14, 12));
             throw name.str();
         }
+        name << getRName(rd) << ", " << std::dec << (int)imm << "(" <<
+                getRName(rs1) << ")";
     }
     else if(getBits(data, 6, 0) == 0x23)
     {
@@ -201,21 +220,27 @@ Instruction::Instruction(uint32_t raw, uint32_t pc) :
         imm = imm4_0 + (imm11_5 << 5);
         extendImm(11);
 
-        //For dump
-        rd = rs2;
-        if(getBits(data, 14, 12) == 0x2)
+        if(getBits(data, 14, 12) == 0x0)
+        {
+            opcode = ISA::OP::SB;
+            process = &Func::SB;
+
+            name << "sb ";
+        }
+        else if(getBits(data, 14, 12) == 0x2)
         {
             opcode = ISA::OP::SW;
             process = &Func::SW;
 
-            name << "sw " << getRName(rs2) << ", " << std::dec << (int)imm << "(" <<
-                getRName(rs1) << ")";
+            name << "sw ";
         }
         else
         {
             name << "Unkown Store Instruction: " + std::to_string(getBits(data, 14, 12));
             throw name.str();
         }
+        name << getRName(rs2) << ", " << std::dec << (int)imm << "(" <<
+                getRName(rs1) << ")";
     }
     else if(getBits(data, 6, 0) == 0x63)
     {
@@ -232,8 +257,6 @@ Instruction::Instruction(uint32_t raw, uint32_t pc) :
         imm = (imm4_1 << 1) + (imm10_5 << 5) + (imm11 << 11) + (imm12 << 12);
         extendImm(12);
 
-        //for debug
-        rd = rs1;
         if(getBits(data, 14, 12) == 0x0)
         {
             opcode  = ISA::OP::BEQ;
@@ -247,6 +270,20 @@ Instruction::Instruction(uint32_t raw, uint32_t pc) :
             process = &Func::BNE;
 
             name << "bne ";
+        }
+        else if (getBits(data, 14, 12) == 0x4)
+        {
+            opcode  = ISA::OP::BLT;
+            process = &Func::BLT;
+
+            name << "blt ";
+        }
+        else if (getBits(data, 14, 12) == 0x5)
+        {
+            opcode  = ISA::OP::BGE;
+            process = &Func::BGE;
+
+            name << "bge ";
         }
         else if (getBits(data, 14, 12) == 0x6)
         {
@@ -277,35 +314,63 @@ Instruction::Instruction(uint32_t raw, uint32_t pc) :
         rs2 = getBits(data, 24, 20);
         type   = ISA::TYPE::R;
 
-        if(getBits(data, 14, 12) == 0x0  && getBits(data, 31, 25) == 0x20)
-        {
-            opcode = ISA::OP::SUB;
-            process = &Func::SUB;
-
-            name << "sub " << getRName(rd) << ", " << getRName(rs1) <<
-                ", " << getRName(rs2);
-        }
-        else if(getBits(data, 14, 12) == 0x0  && getBits(data, 31, 25) == 0x0)
+        if(getBits(data, 14, 12) == 0x0  && getBits(data, 31, 25) == 0x0)
         {
             opcode = ISA::OP::ADD;
             process = &Func::ADD;
 
-            name << "add " << getRName(rd) << ", " << getRName(rs1) <<
-                ", " << getRName(rs2);
+            name << "add ";
+        }
+        else if(getBits(data, 14, 12) == 0x0  && getBits(data, 31, 25) == 0x20)
+        {
+            opcode = ISA::OP::SUB;
+            process = &Func::SUB;
+
+            name << "sub ";
         }
         else if(getBits(data, 14, 12) == 0x3 && getBits(data, 31, 25) == 0x0)
         {
             opcode = ISA::OP::SLTU;
             process = &Func::SLTU;
 
-            name << "sltu " << getRName(rd) << ", " << getRName(rs1) <<
-                ", " << getRName(rs2);
+            name << "sltu ";
+        }
+        else if (getBits(data, 14, 12) == 0x6 && getBits(data, 31, 25) == 0x0)
+        {
+            opcode = ISA::OP::OR;
+            process = &Func::OR;
+
+            name << "or ";
+        }
+        else if (getBits(data, 14, 12) == 0x7 && getBits(data, 31, 25) == 0x0)
+        {
+            opcode = ISA::OP::AND;
+            process = &Func::AND;
+
+            name << "and ";
+        }
+        else if (getBits(data, 14, 12) == 0x0 && getBits(data, 31, 25) == 0x1)
+        {
+            opcode = ISA::OP::MUL;
+            process = &Func::MUL;
+
+            name << "mul ";
+        }
+        else if (getBits(data, 14, 12) == 0x5 && getBits(data, 31, 25) == 0x1)
+        {
+            opcode = ISA::OP::DIVU;
+            process = &Func::DIVU;
+
+            name << "divu ";
         }
         else
         {
-            name << "Unkown Arithmetical Instruction: " + std::to_string(data);
+            name << "Unkown Arithmetical Instruction: " + std::to_string(getBits(data, 14, 12));
             throw name.str();
         }
+
+        name << getRName(rd) << ", " << getRName(rs1) <<
+                ", " << getRName(rs2);
     }
     else if(getBits(data, 6, 0) == 0x73)
     {
@@ -321,6 +386,28 @@ Instruction::Instruction(uint32_t raw, uint32_t pc) :
         else
         {
             name << "Unkown System Instruction: " + std::to_string(data);
+            throw name.str();
+        }
+    }
+    else if(getBits(data, 6, 0) == 0x2f && getBits(data, 14, 12) == 0x2)
+    {
+        type   = ISA::TYPE::R;
+
+        rd  = getBits(data, 11, 7);
+        rs1 = getBits(data, 19, 15);
+        rs2 = getBits(data, 24, 20);
+
+        if(getBits(data, 31, 27) == 0x1)
+        {
+            opcode = ISA::OP::AMOSWAP;
+            process = &Func::AMOSWAP;
+
+            name << "amoswap.w " << getRName(rd) << ", " << 
+                getRName(rs2) << ", (" << getRName(rs1) << ")";
+        }
+        else
+        {
+            name << "Unkown Atomic Instruction: " + std::to_string(getBits(data, 31, 27));
             throw name.str();
         }
     }

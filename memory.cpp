@@ -41,6 +41,12 @@ uint32_t Memory::load(uint32_t addr, uint8_t size) const
         uint32_t* memory = (uint32_t*)(data.data());
         return memory[addr];
     }
+    else if(size == 1)
+    {
+        addr = addr;
+        uint8_t* memory = (uint8_t*)(data.data());
+        return (uint32_t)memory[addr];
+    }
     else
     {
         throw std::string("Unknown load size");
@@ -55,6 +61,12 @@ void Memory::store(uint32_t addr, uint32_t val, uint8_t size)
         addr = addr / 4;
         uint32_t* memory = (uint32_t*)(data.data());
         memory[addr] = val;
+    }
+    else if(size == 1)
+    {
+        addr = addr;
+        uint8_t* memory = (uint8_t*)(data.data());
+        memory[addr] = (uint8_t)val;
     }
     else
     {

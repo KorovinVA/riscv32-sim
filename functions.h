@@ -24,6 +24,16 @@ namespace Func
     void SLTU (Memory* mem, Instruction* insn);
     void BGEU (Memory* mem, Instruction* insn);
     void BLTU (Memory* mem, Instruction* insn);
+    void DIVU (Memory* mem, Instruction* insn);
+    void MUL  (Memory* mem, Instruction* insn);
+    void BLT  (Memory* mem, Instruction* insn);
+    void BGE  (Memory* mem, Instruction* insn);
+    void AND  (Memory* mem, Instruction* insn);
+    void LBU  (Memory* mem, Instruction* insn);
+    void SB   (Memory* mem, Instruction* insn);
+    void OR   (Memory* mem, Instruction* insn);
+    void XORI (Memory* mem, Instruction* insn);
+    void AMOSWAP(Memory* mem, Instruction* insn);
 }
 
 #endif //FUNCTIONS_H
