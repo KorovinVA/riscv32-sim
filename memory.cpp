@@ -9,7 +9,7 @@ Memory::Memory(uint32_t entry, std::vector<uint8_t>* rawData) :
     memcpy(&(data[0]), (void*)(rawData->data()), rawData->size());
 
     //Stack pointer, seems wrong :(
-    ax[2] =  entry;
+    ax[2] =  5000;
 }
 
 uint32_t Memory::PullNextInsn() const

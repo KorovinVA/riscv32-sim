@@ -127,3 +127,27 @@ void Func::SLTU(Memory* mem, Instruction* insn)
     }
     mem->setPc(mem->getPc() + 4);
 }
+
+void Func::BGEU(Memory* mem, Instruction* insn)
+{
+    if(mem->getReg(insn->getRs1()) >= mem->getReg(insn->getRs2()))
+    {
+        mem->setPc(mem->getPc() + insn->getImm());
+    }
+    else
+    {
+        mem->setPc(mem->getPc() + 4);
+    }
+}
+
+void Func::BLTU(Memory* mem, Instruction* insn)
+{
+    if(mem->getReg(insn->getRs1()) < mem->getReg(insn->getRs2()))
+    {
+        mem->setPc(mem->getPc() + insn->getImm());
+    }
+    else
+    {
+        mem->setPc(mem->getPc() + 4);
+    }
+}

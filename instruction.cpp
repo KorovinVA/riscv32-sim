@@ -48,7 +48,7 @@ Instruction::Instruction(uint32_t raw, uint32_t pc) :
     pc(pc)
 {
     data = raw;
-    name << std::hex << pc << "\t";
+    name << std::hex << pc << ":\t";
 
     if(getBits(data, 6, 0) == 0x6f)
     {
@@ -239,20 +239,36 @@ Instruction::Instruction(uint32_t raw, uint32_t pc) :
             opcode  = ISA::OP::BEQ;
             process = &Func::BEQ;
 
-            name << "beq " << getRName(rs2) << ", " << getRName(rs1) << ", " << pc + imm;
+            name << "beq ";
         }
         else if (getBits(data, 14, 12) == 0x1)
         {
             opcode  = ISA::OP::BNE;
             process = &Func::BNE;
 
-            name << "bne " << getRName(rs2) << ", " << getRName(rs1) << ", " << pc + imm;
+            name << "bne ";
+        }
+        else if (getBits(data, 14, 12) == 0x6)
+        {
+            opcode  = ISA::OP::BLTU;
+            process = &Func::BLTU;
+
+            name << "bltu ";
+        }
+        else if (getBits(data, 14, 12) == 0x7)
+        {
+            opcode  = ISA::OP::BGEU;
+            process = &Func::BGEU;
+
+            name << "bgeu ";
         }
         else
         {
             name << "Unkown Branch Instruction: " + std::to_string(getBits(data, 14, 12));
             throw name.str();
         }
+
+        name << getRName(rs1) << ", " << getRName(rs2) << ", " << pc + imm;
     }
     else if(getBits(data, 6, 0) == 0x33)
     {

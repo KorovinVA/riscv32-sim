@@ -26,6 +26,8 @@ namespace ISA
         LUI,
         BEQ,
         BNE,
+        BLTU,
+        BGEU,
         ECALL,
         SLTU,
         INVALID

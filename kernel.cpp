@@ -18,23 +18,25 @@ Kernel::Kernel(Memory* memory, bool tracing):
 
 void Kernel::Run()
 {
-    for(int i = 0; i < 100; ++i)
+    for(int i = 0; i < 180000; ++i)
     {
+        bool isPrint = false;
         if(executed.count(mem->getPc()) <= 0)
         {
             std::unique_ptr<Instruction> unInsn(new Instruction(mem->PullNextInsn(), mem->getPc()));
             executed.insert(std::pair<uint32_t, std::unique_ptr<Instruction>>(mem->getPc(), std::move(unInsn)));
+            isPrint = true;
         }
         Instruction* insn = executed[mem->getPc()].get();
 
-        if(trEn)
+        if(trEn && isPrint)
         {
             DumpExecInsn(insn);
         }
 
         insn->process(mem, insn);
 
-        if(trEn)
+        if(trEn && isPrint)
         {
             DumpChangedReg(insn);
         }

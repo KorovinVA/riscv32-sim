@@ -22,6 +22,8 @@ namespace Func
     void BNE  (Memory* mem, Instruction* insn);
     void ECALL(Memory* mem, Instruction* insn);
     void SLTU (Memory* mem, Instruction* insn);
+    void BGEU (Memory* mem, Instruction* insn);
+    void BLTU (Memory* mem, Instruction* insn);
 }
 
 #endif //FUNCTIONS_H
