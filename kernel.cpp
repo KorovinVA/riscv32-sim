@@ -18,26 +18,51 @@ Kernel::Kernel(Memory* memory, bool tracing):
 
 void Kernel::Run()
 {
-    for(int i = 0; i < 180000; ++i)
+    uint64_t instExec  = 0;
+    uint64_t instCache = 0;
+
+    try
     {
-        if(executed.count(mem->getPc()) <= 0)
+        while(instExec < 6029818)
         {
-            //Instruction hasn't been decoded yet
-            std::unique_ptr<Instruction> unInsn(new Instruction(mem->PullNextInsn(), mem->getPc()));
-            executed.insert(std::pair<uint32_t, std::unique_ptr<Instruction>>(mem->getPc(), std::move(unInsn)));
-        }
-        Instruction* insn = executed[mem->getPc()].get();
+            Instruction* insn = nullptr;
 
-        if(trEn)
-        {
-            DumpExecInsn(insn);
-        }
+            if(executed.count(mem->getPc()) <= 0)
+            {
+                //Instruction hasn't been decoded yet
+                instCache++;
 
-        insn->process(mem, insn);
+                insn = new Instruction(mem->PullNextInsn(), mem->getPc());
+                executed.insert(std::pair<uint32_t, Instruction*>(mem->getPc(), insn));
+            }
+            else
+            {
+                insn = executed[mem->getPc()];
+            }
+
+            if(trEn)
+            {
+                DumpExecInsn(insn);
+            }
+
+            instExec++;
+            insn->process(mem, insn);
         
-        if(trEn)
+            if(trEn)
+            {
+                DumpChangedReg(insn);
+            }
+        }
+    }
+    catch (int a)
+    {
+        if (a == -1)
         {
-            DumpChangedReg(insn);
+            std::cout << "ECALL was called in " << std::hex << 
+                mem->getPc() << std::endl;
+            std::cout << std::dec << "Executed: " << instExec << "\n Cached: " <<
+               instCache << std::endl;    
+            return;
         }
     }
 }
@@ -58,8 +83,13 @@ void Kernel::DumpChangedReg(Instruction* insn)
 
 Kernel::~Kernel()
 {
-    if(trEn)
+    if(state.is_open())
     {
         state.close();
+    }
+
+    for(auto it : executed)
+    {
+        delete it.second;
     }
 }

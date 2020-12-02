@@ -121,6 +121,19 @@ Instruction::Instruction(uint32_t raw, uint32_t pc) :
             name << "addi " << getRName(rd) << ", " << 
                 getRName(rs1) << ", " << std::dec << (int)imm;
         }
+        else if(getBits(data, 14, 12) == 0x3)
+        {
+            opcode = ISA::OP::SLTIU;
+
+            rd     = getBits(data, 11, 7);
+            rs1    = getBits(data, 19, 15);
+            imm    = getBits(data, 31, 20);
+            extendImm(11);
+
+            process = &Func::SLTIU;
+            name << "sltiu " << getRName(rd) << ", " << 
+                getRName(rs1) << ", " << std::dec << (int)imm;
+        }
         else if(getBits(data, 14, 12) == 0x4)
         {
             opcode = ISA::OP::XORI;
@@ -157,6 +170,18 @@ Instruction::Instruction(uint32_t raw, uint32_t pc) :
 
             process = &Func::SLLI;
             name << "slli " << getRName(rd) << ", " << 
+                getRName(rs1) << ", 0x" << imm;
+        }
+        else if(getBits(data, 14, 12) == 0x5 && getBits(data, 31, 25) == 0x20)
+        {
+            opcode = ISA::OP::SRAI;
+
+            rd     = getBits(data, 11, 7);
+            rs1    = getBits(data, 19, 15);
+            imm    = getBits(data, 24, 20);
+
+            process = &Func::SRAI;
+            name << "srai " << getRName(rd) << ", " << 
                 getRName(rs1) << ", 0x" << imm;
         }
         else if(getBits(data, 14, 12) == 0x5 && getBits(data, 31, 25) == 0x0)
@@ -405,15 +430,23 @@ Instruction::Instruction(uint32_t raw, uint32_t pc) :
             name << "amoswap.w " << getRName(rd) << ", " << 
                 getRName(rs2) << ", (" << getRName(rs1) << ")";
         }
+        else if(getBits(data, 31, 27) == 0x2 && getBits(data, 14, 12) == 0x2 &&
+            rs2 == 0)
+        {
+            opcode = ISA::OP::LRW;
+            process = &Func::LRW;
+
+            name << "lr.w " << getRName(rd) << ", (" << getRName(rs1) << ")";
+        }
         else
         {
-            name << "Unkown Atomic Instruction: " + std::to_string(getBits(data, 31, 27));
+            name << "Unkown AMO Instruction: " + std::to_string(getBits(data, 31, 27));
             throw name.str();
         }
     }
     else
     {
-        name << "Unkown Instruction: " + std::to_string(data);
+        //name << "Unkown Instruction: " + std::to_string(data);
         throw name.str();
     }
 }

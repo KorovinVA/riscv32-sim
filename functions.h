@@ -34,6 +34,9 @@ namespace Func
     void OR   (Memory* mem, Instruction* insn);
     void XORI (Memory* mem, Instruction* insn);
     void AMOSWAP(Memory* mem, Instruction* insn);
+    void SLTIU(Memory* mem, Instruction* insn);
+    void SRAI (Memory* mem, Instruction* insn);
+    void LRW  (Memory* mem, Instruction* insn);
 }
 
 #endif //FUNCTIONS_H

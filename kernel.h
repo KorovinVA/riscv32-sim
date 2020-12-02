@@ -20,7 +20,7 @@ private:
     void DumpExecInsn(Instruction* insn);
     void DumpChangedReg(Instruction* insn);
 
-    std::map<uint32_t, std::unique_ptr<Instruction>> executed;
+    std::map<uint32_t, Instruction*> executed;
     const bool trEn;
     std::ofstream state;
 };

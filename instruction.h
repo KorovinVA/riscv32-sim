@@ -19,12 +19,14 @@ namespace ISA
         JALR,
         AUIPC,
         ADDI,
+        SLTIU,
         XORI,
         ANDI,
         LW,
         LBU,
         SUB,
         SRLI,
+        SRAI,
         SLLI,
         SB,
         SW,
@@ -40,6 +42,7 @@ namespace ISA
         DIVU,
         MUL,
         AMOSWAP,
+        LRW,
         INVALID
     };
 

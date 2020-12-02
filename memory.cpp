@@ -2,25 +2,22 @@
 
 Memory::Memory(uint32_t entry, std::vector<uint8_t>* rawData) : 
     pc(entry),
-    data(),
     ax()
 {
-    data.resize(rawData->size());
-    memcpy(&(data[0]), (void*)(rawData->data()), rawData->size());
+    dataByte = new uint8_t[rawData->size()];
+    dataWord = (uint32_t*)dataByte;
+
+    memcpy(dataByte, (void*)(rawData->data()), rawData->size());
 
     //Stack pointer, seems wrong :(
     ax[2] =  5000;
+    //Gloabal pointer, idk what to do :(
+    ax[3]  = 533368;
 }
 
 uint32_t Memory::PullNextInsn() const
 {
-    uint32_t byte_1 = data[pc];
-    uint32_t byte_2 = data[pc + 1] << 8;
-    uint32_t byte_3 = data[pc + 2] << 16;
-    uint32_t byte_4 = data[pc + 3] << 24;
-
-    uint32_t dword = byte_1 + byte_2 + byte_3 + byte_4;
-    return dword;
+    return dataWord[pc / 4];
 }
 
 uint32_t Memory::getPc() const
@@ -33,65 +30,47 @@ uint32_t Memory::getReg(uint32_t num) const
     return ax[num];
 }
 
-uint32_t Memory::load(uint32_t addr, uint8_t size) const
+uint32_t Memory::loadByte(uint32_t addr) const
 {
-    if(size == 4)
-    {
-        addr = addr / 4;
-        uint32_t* memory = (uint32_t*)(data.data());
-        return memory[addr];
-    }
-    else if(size == 1)
-    {
-        addr = addr;
-        uint8_t* memory = (uint8_t*)(data.data());
-        return (uint32_t)memory[addr];
-    }
-    else
-    {
-        throw std::string("Unknown load size");
-    }
-    return -1;
+    return dataByte[addr];
 }
 
-void Memory::store(uint32_t addr, uint32_t val, uint8_t size)
+uint32_t Memory::loadWord(uint32_t addr) const
 {
-    if(size == 4)
-    {
-        addr = addr / 4;
-        uint32_t* memory = (uint32_t*)(data.data());
-        memory[addr] = val;
-    }
-    else if(size == 1)
-    {
-        addr = addr;
-        uint8_t* memory = (uint8_t*)(data.data());
-        memory[addr] = (uint8_t)val;
-    }
-    else
-    {
-        throw std::string("Unknown store size");
-    }
+    addr >>= 2;
+    return dataWord[addr];
 }
 
+void Memory::storeWord(uint32_t addr, uint32_t val)
+{
+    addr >>= 2;
+    dataWord[addr] = val;
+}
+
+void Memory::storeByte(uint32_t addr, uint32_t val)
+{
+    dataByte[addr] = (uint8_t)val;
+}
+
+void Memory::UpdatePc()
+{
+    pc += 4;
+}
 
 void Memory::setPc(uint32_t nPc)
 {
     pc = nPc;
 }
 
-
 void Memory::setReg(uint32_t dst, uint32_t val)
 {
-    if(dst >= 32)
-    {
-        throw std::string("Trying to write in invalid register");
-    }
-    if(dst != 0)
+    if(dst > 0 && dst < 32)
     {
         ax[dst] = val;
     }
 }
 
 Memory::~Memory()
-{}
+{
+    delete [] dataByte;
+}

@@ -8,3 +8,6 @@ riscv32-sim
 
 #debug files
 *.state
+
+#profiles
+callgrind*
