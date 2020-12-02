@@ -28,14 +28,13 @@ void Kernel::Run()
             if(executed.count(pc) <= 0)
             {
                 //Instruction hasn't been decoded yet
-                insn = new Instruction(mem->PullNextInsn(), pc);
+                insn = new Instruction(mem->pullNextInsn(), pc);
                 executed.insert(std::pair<uint32_t, Instruction*>(pc, insn));
             }
             else
             {
                 insn = executed[pc];
             }
-
             if(trEn)
             {
                 DumpExecInsn(insn);

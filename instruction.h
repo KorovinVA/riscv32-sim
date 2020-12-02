@@ -70,27 +70,15 @@ public:
     std::string getRName(uint32_t reg) const;
     void (*process)(Memory*, Instruction*) = nullptr;
 
-    inline uint32_t getImm()  const
-    {
-        return imm;
-    }
-    inline uint32_t getRd()   const
-    {
-        return rd;
-    }
-    inline uint32_t getRs1()  const
-    {
-        return rs1;
-    }
-    inline uint32_t getRs2()  const
-    {
-        return rs2;
-    }
+    uint32_t getImm()  const;
+    uint32_t getRd()   const;
+    uint32_t getRs1()  const;
+    uint32_t getRs2()  const;
 
     uint32_t operator() (const uint32_t end, const uint32_t start) const;
 private:
-    uint32_t    getBits(uint32_t raw, uint32_t end, uint32_t start) const;
-    void        extendImm(uint8_t signBit);
+    uint32_t getBits(uint32_t raw, uint32_t end, uint32_t start) const;
+    void     extendImm(uint8_t signBit);
 
     ISA::OP opcode;
     ISA::TYPE type;
@@ -105,5 +93,23 @@ private:
     const static std::map<uint32_t, std::string> rmap;
     std::stringstream name;
 };
+
+
+inline uint32_t Instruction::getImm()  const
+{
+    return imm;
+}
+inline uint32_t Instruction::getRd()   const
+{
+    return rd;
+}
+inline uint32_t Instruction::getRs1()  const
+{
+    return rs1;
+}
+inline uint32_t Instruction::getRs2()  const
+{
+    return rs2;
+}
 
 #endif //INSTRUCTION_H

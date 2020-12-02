@@ -446,7 +446,7 @@ Instruction::Instruction(uint32_t raw, uint32_t pc) :
     }
     else
     {
-        //name << "Unkown Instruction: " + std::to_string(data);
+        name << "Unkown Instruction: " + std::to_string(data);
         throw name.str();
     }
 }
@@ -455,27 +455,7 @@ std::string Instruction::getName() const
 {
     return name.str();
 }
-/*
-uint32_t Instruction::getImm() const
-{
-    return imm;
-}
 
-uint32_t Instruction::getRd() const
-{
-    return rd;
-}
-
-uint32_t Instruction::getRs1() const
-{
-    return rs1;
-}
-
-uint32_t Instruction::getRs2() const
-{
-    return rs2;
-}
-*/
 ISA::OP Instruction::getOp() const
 {
     return opcode;
