@@ -455,7 +455,7 @@ std::string Instruction::getName() const
 {
     return name.str();
 }
-
+/*
 uint32_t Instruction::getImm() const
 {
     return imm;
@@ -475,7 +475,7 @@ uint32_t Instruction::getRs2() const
 {
     return rs2;
 }
-
+*/
 ISA::OP Instruction::getOp() const
 {
     return opcode;

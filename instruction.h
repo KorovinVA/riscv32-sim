@@ -66,13 +66,26 @@ public:
     ~Instruction();
 
     std::string getName() const;
-    uint32_t    getImm()  const;
-    uint32_t    getRd()   const;
-    uint32_t    getRs1()  const;
-    uint32_t    getRs2()  const;
     ISA::OP     getOp()   const;
     std::string getRName(uint32_t reg) const;
     void (*process)(Memory*, Instruction*) = nullptr;
+
+    inline uint32_t getImm()  const
+    {
+        return imm;
+    }
+    inline uint32_t getRd()   const
+    {
+        return rd;
+    }
+    inline uint32_t getRs1()  const
+    {
+        return rs1;
+    }
+    inline uint32_t getRs2()  const
+    {
+        return rs2;
+    }
 
     uint32_t operator() (const uint32_t end, const uint32_t start) const;
 private:

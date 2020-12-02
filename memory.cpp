@@ -15,12 +15,12 @@ Memory::Memory(uint32_t entry, std::vector<uint8_t>* rawData) :
     ax[3]  = 533368;
 }
 
-uint32_t Memory::PullNextInsn() const
+/*uint32_t Memory::PullNextInsn() const
 {
     return dataWord[pc / 4];
-}
+}*/
 
-uint32_t Memory::getPc() const
+/*uint32_t Memory::getPc() const
 {
     return pc;
 }
@@ -29,7 +29,7 @@ uint32_t Memory::getReg(uint32_t num) const
 {
     return ax[num];
 }
-
+*/
 uint32_t Memory::loadByte(uint32_t addr) const
 {
     return dataByte[addr];
@@ -52,7 +52,7 @@ void Memory::storeByte(uint32_t addr, uint32_t val)
     dataByte[addr] = (uint8_t)val;
 }
 
-void Memory::UpdatePc()
+/*void Memory::UpdatePc()
 {
     pc += 4;
 }
@@ -68,7 +68,7 @@ void Memory::setReg(uint32_t dst, uint32_t val)
     {
         ax[dst] = val;
     }
-}
+}*/
 
 Memory::~Memory()
 {
