@@ -18,26 +18,22 @@ Kernel::Kernel(Memory* memory, bool tracing):
 
 void Kernel::Run()
 {
-    uint64_t instExec  = 0;
-    uint64_t instCache = 0;
-
     try
     {
-        while(instExec < 6029818)
+        while(1)
         {
             Instruction* insn = nullptr;
+            uint32_t pc = mem->getPc();
 
-            if(executed.count(mem->getPc()) <= 0)
+            if(executed.count(pc) <= 0)
             {
                 //Instruction hasn't been decoded yet
-                instCache++;
-
-                insn = new Instruction(mem->PullNextInsn(), mem->getPc());
-                executed.insert(std::pair<uint32_t, Instruction*>(mem->getPc(), insn));
+                insn = new Instruction(mem->PullNextInsn(), pc);
+                executed.insert(std::pair<uint32_t, Instruction*>(pc, insn));
             }
             else
             {
-                insn = executed[mem->getPc()];
+                insn = executed[pc];
             }
 
             if(trEn)
@@ -45,7 +41,6 @@ void Kernel::Run()
                 DumpExecInsn(insn);
             }
 
-            instExec++;
             insn->process(mem, insn);
         
             if(trEn)
@@ -59,9 +54,7 @@ void Kernel::Run()
         if (a == -1)
         {
             std::cout << "ECALL was called in " << std::hex << 
-                mem->getPc() << std::endl;
-            std::cout << std::dec << "Executed: " << instExec << "\n Cached: " <<
-               instCache << std::endl;    
+                mem->getPc() << std::endl;   
             return;
         }
     }

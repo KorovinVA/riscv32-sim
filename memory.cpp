@@ -37,13 +37,13 @@ uint32_t Memory::loadByte(uint32_t addr) const
 
 uint32_t Memory::loadWord(uint32_t addr) const
 {
-    addr >>= 2;
+    addr /= 4;
     return dataWord[addr];
 }
 
 void Memory::storeWord(uint32_t addr, uint32_t val)
 {
-    addr >>= 2;
+    addr /= 4;
     dataWord[addr] = val;
 }
 
@@ -64,7 +64,7 @@ void Memory::setPc(uint32_t nPc)
 
 void Memory::setReg(uint32_t dst, uint32_t val)
 {
-    if(dst > 0 && dst < 32)
+    if(dst != 0)
     {
         ax[dst] = val;
     }
