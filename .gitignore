@@ -3,8 +3,7 @@ tests/
 *.out
 
 #build files
-riscv32-sim
-*.o
+build/
 
 #debug files
 *.state

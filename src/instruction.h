@@ -5,6 +5,7 @@
 #include <iostream>
 #include <map>
 #include <iomanip>
+#include <sstream>
 
 #include "memory.h"
 
