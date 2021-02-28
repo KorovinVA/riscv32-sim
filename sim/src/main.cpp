@@ -1,9 +1,9 @@
 #include <iostream>
 #include <stdlib.h>
 
-#include "readelf.h"
-#include "memory.h"
-#include "kernel.h"
+#include "../inc/readelf.h"
+#include "../inc/kernel.h"
+#include "../inc/memory.h"
 
 int main(int argc, char* argv[])
 {

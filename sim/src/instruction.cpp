@@ -1,5 +1,5 @@
-#include "instruction.h"
-#include "functions.h"
+#include "../inc/instruction.h"
+#include "../inc/functions.h"
 
 const std::map<uint32_t, std::string> Instruction::rmap =
 {

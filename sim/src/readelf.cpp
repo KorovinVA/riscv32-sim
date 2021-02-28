@@ -1,4 +1,4 @@
-#include "readelf.h"
+#include "../inc/readelf.h"
 
 ElfReader::ElfReader(const char* elf) :
     phdrs(),

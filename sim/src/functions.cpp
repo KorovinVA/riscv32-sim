@@ -1,4 +1,4 @@
-#include "functions.h"
+#include "../inc/functions.h"
 
 void Func::JAL(Memory* mem, Instruction* insn)
 {

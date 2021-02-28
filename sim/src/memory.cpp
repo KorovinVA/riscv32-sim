@@ -1,4 +1,4 @@
-#include "memory.h"
+#include "../inc/memory.h"
 
 Memory::Memory(uint32_t entry, std::vector<uint8_t>* rawData) : 
     pc(entry),
