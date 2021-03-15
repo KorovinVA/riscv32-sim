@@ -4,10 +4,9 @@
 #include <string>
 #include <iostream>
 #include <map>
+#include <vector>
 #include <iomanip>
 #include <sstream>
-
-#include "memory.h"
 
 namespace ISA
 {
@@ -61,14 +60,12 @@ namespace ISA
 class Instruction
 {
 public:
-    Instruction();
-    Instruction(uint32_t raw, uint32_t pc);
+    Instruction(uint32_t raw, uint64_t pc);
     ~Instruction();
 
     std::string getName() const;
     ISA::OP     getOp()   const;
     std::string getRName(uint32_t reg) const;
-    void (*process)(Memory*, Instruction*) = nullptr;
 
     uint32_t getImm()  const;
     uint32_t getRd()   const;
@@ -88,10 +85,9 @@ private:
     uint32_t rs1 = 0;
     uint32_t rs2 = 0;
     uint32_t imm = 0;
-    const uint32_t pc  = 0;
+    const uint64_t pc  = 0;
 
-    const static std::map<uint32_t, std::string> rmap;
-    std::stringstream name;
+    std::string isaText;
 };
 
 

@@ -1,9 +1,7 @@
 #include <iostream>
-#include <stdlib.h>
+#include <cstdlib>
 
-#include "../inc/readelf.h"
-#include "../inc/kernel.h"
-#include "../inc/memory.h"
+#include "../inc/parser.h"
 
 int main(int argc, char* argv[])
 {
@@ -15,10 +13,8 @@ int main(int argc, char* argv[])
 
     try
     {
-        ElfReader Elf(argv[1]);
-        Memory Mem(Elf.getEntry(), Elf.getRawData());
-        Kernel Unit(&Mem, false);
-        Unit.Run();
+        Parser parse(argv[1]);
+        parse.parse();
     }
     catch(const std::string &str)
     {

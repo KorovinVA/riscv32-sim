@@ -1,98 +1,47 @@
 #include "../inc/readelf.h"
 
-ElfReader::ElfReader(const char* elf) :
-    phdrs(),
-    data()
+ElfReader::ElfReader(const std::string& filename) :
+    elfFileName(filename),
+    execSections()
 {
-    if (elf_version(EV_CURRENT ) == EV_NONE)
+    if (!elfio.load(filename))
     {
-        throw std::string("ELF library version problem");
+        std::cerr << "Elf cannot be loaded!" << std::endl;
+        exit(1);
     }
-
-    OpenElf(elf);
-    ReadHeader();
-    LoadPHdrs();
-    LoadData();
 }
 
-
-void ElfReader::OpenElf(const char* elf)
+uint64_t ElfReader::getImageSize() const
 {
-    elfFd = open(elf, O_RDONLY, 0);
-    if(elfFd < 0)
+    uint64_t size = 0;
+    for (auto it : elfio.sections)
     {
-        throw std::string(std::strerror(errno));
-    }
-    elfData = elf_begin(elfFd, ELF_C_READ, NULL);
-}
-
-void ElfReader::ReadHeader()
-{
-    if(gelf_getehdr(elfData, &ehdr) == NULL) 
-    {
-        throw std::string(elf_errmsg(-1));
-    }
-    entry = ehdr.e_entry;
-}
-
-void ElfReader::LoadPHdrs()
-{
-    size_t phNum = 0;
-    if(elf_getphdrnum(elfData, &phNum) != 0)
-    {
-        throw std::string(elf_errmsg(-1));
-    }
-
-    GElf_Phdr phdr;
-    for (size_t i = 0; i < phNum; ++i) 
-    {
-        if (gelf_getphdr(elfData, i, &phdr) != &phdr)
+        if ((it->get_flags() & SHF_ALLOC) != 0)
         {
-            throw std::string(elf_errmsg(-1));
+            size = it->get_address() + it->get_size();
         }
-        phdrs.push_back(phdr);
     }
+    return size;
 }
 
-void ElfReader::LoadData()
+void ElfReader::load(uint8_t* mem)
 {
-    auto maxSegment = *std::max_element(phdrs.begin(), phdrs.end(), 
-                                        [](GElf_Phdr a, GElf_Phdr b)
-                                            { return a.p_vaddr + a.p_memsz < b.p_vaddr + b.p_memsz; }
-                                        );
-    size_t maxVecSize = maxSegment.p_vaddr + maxSegment.p_memsz;
-    data.resize(maxVecSize);
+    assert(mem != nullptr);
 
-    for (int i = 0; i < phdrs.size(); ++i)
+    for (auto it : elfio.sections)
     {
-        void* segment = calloc(1, phdrs[i].p_memsz);
-
-        lseek(elfFd, phdrs[i].p_offset, SEEK_SET);
-        if(read(elfFd, segment, phdrs[i].p_memsz) < 0)
+        if ((it->get_flags() & SHF_ALLOC) != 0 && it->get_data() != nullptr)
         {
-            throw std::string(std::strerror(errno));
+            std::memcpy(mem + it->get_address(), it->get_data(), it->get_size());
         }
-
-        for(int j = 0; j < phdrs[i].p_memsz; ++j)
+        if ((it->get_flags() & SHF_EXECINSTR) != 0)
         {
-            data[phdrs[i].p_paddr + j] = *((uint8_t*)segment + j);
+            SectionInfo sec;
+            std::tie(sec.addr, sec.size, sec.name) = std::make_tuple(it->get_address(), it->get_size(), it->get_name());
+            execSections.push_back(sec);
         }
-        free(segment);
     }
-}
-
-std::vector<uint8_t>* ElfReader::getRawData()
-{
-    return &data;
-}
-
-uint32_t ElfReader::getEntry()
-{
-    return entry;
 }
 
 ElfReader::~ElfReader()
-{
-    elf_end(elfData);
-    close(elfFd);
-}
+{}
