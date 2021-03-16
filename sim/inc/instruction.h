@@ -19,30 +19,58 @@ namespace ISA
         BEQ,
         BNE,
         BLT,
-        BLTU,
         BGE,
+        BLTU,
         BGEU,
+        LB,
+        LH,
         LW,
         LBU,
+        LHU,
         SB,
+        SH,
         SW,
         ADDI,
+        SLTI,
         SLTIU,
         XORI,
+        ORI,
         ANDI,
         SLLI,
         SRLI,
         SRAI,
         ADD,
         SUB,
+        SLL,
+        SLT,
         SLTU,
+        XOR,
+        SRL,
+        SRA,
         OR,
         AND,
+        FENCE,
+        ECALL,
+        EBREAK,
         MUL,
+        MULH,
+        MULHSU,
+        MULHU,
+        DIV,
         DIVU,
-        LRW,
-        AMOSWAP,
-        ECALL
+        REM,
+        REMU,
+        LR_W,
+        SC_W,
+        AMOSWAP_W,
+        AMOADD_W,
+        AMOXOR_W,
+        AMOAND_W,
+        AMOOR_W,
+        AMOMIN_W,
+        AMOMAX_W,
+        AMOMINU_W,
+        AMOMAXU_W
     };
 
     enum class TYPE
@@ -53,7 +81,7 @@ namespace ISA
         B,
         U,
         J,
-        INVALID
+        SR // SLLI, SRLI, SRAI
     };
 }
 
@@ -80,14 +108,17 @@ private:
     ISA::OP opcode;
     ISA::TYPE type;
 
-    uint32_t data;
-    uint32_t rd  = 0;
-    uint32_t rs1 = 0;
-    uint32_t rs2 = 0;
+    uint32_t rd   = 0;
+    uint32_t rs1  = 0;
+    uint32_t rs2  = 0;
     uint32_t imm = 0;
     const uint64_t pc  = 0;
+    const uint32_t data = 0;
 
     std::string isaText;
+    std::string name;
+
+    bool isParsed = false;
 };
 
 
