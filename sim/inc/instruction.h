@@ -70,7 +70,15 @@ namespace ISA
         AMOMIN_W,
         AMOMAX_W,
         AMOMINU_W,
-        AMOMAXU_W
+        AMOMAXU_W,
+        CSRRW,
+        CSRRS,
+        CSRRSI,
+        FLD,
+        FSD,
+        FSGNJX_D,
+        FEQ_D,
+        FLT_D
     };
 
     enum class TYPE

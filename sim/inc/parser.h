@@ -14,6 +14,7 @@ private:
     uint8_t* data = nullptr;
     ElfReader elf;
     std::vector<Instruction> instBuff;
+    std::ofstream disasm;
 };
 
 #endif //PARSER_H

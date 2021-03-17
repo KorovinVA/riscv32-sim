@@ -105,6 +105,18 @@ const static std::vector<std::tuple<ISA::OP, uint32_t, uint32_t, std::string, IS
     {ISA::OP::AMOMAX_W,  0xf800707f, 0xa000202f, "amomax.w",  ISA::TYPE::R},
     {ISA::OP::AMOMINU_W, 0xf800707f, 0xc000202f, "amominu.w", ISA::TYPE::R},
     {ISA::OP::AMOMAXU_W, 0xf800707f, 0xe000202f, "amomaxu.w", ISA::TYPE::R},
+
+    // RV32/RV64 Zicsr Standard Extension
+    {ISA::OP::CSRRW,  0x707f, 0x1073, "csrrw",  ISA::TYPE::I},
+    {ISA::OP::CSRRS,  0x707f, 0x2073, "csrrs",  ISA::TYPE::I},
+    {ISA::OP::CSRRSI, 0x707f, 0x6073, "csrrsi", ISA::TYPE::I},
+
+    // RV32D Standard Extension
+    {ISA::OP::FLD,      0x707f,     0x3007,     "fld",      ISA::TYPE::I},
+    {ISA::OP::FSD,      0x707f,     0x3027,     "fsd",      ISA::TYPE::S},
+    {ISA::OP::FSGNJX_D, 0xfe00707f, 0x22002053, "fsgnjx.d", ISA::TYPE::R},
+    {ISA::OP::FEQ_D,    0xfe00707f, 0xa2002053, "feq.d",    ISA::TYPE::R},
+    {ISA::OP::FLT_D,    0xfe00707f, 0xa2001053, "flt.d",    ISA::TYPE::R}
 };
 
 Instruction::Instruction(uint32_t raw, uint64_t pc) :
@@ -146,6 +158,8 @@ Instruction::Instruction(uint32_t raw, uint64_t pc) :
     case ISA::TYPE::I:
         rd = getBits(data, 11, 7);
         rs1 = getBits(data, 19, 15);
+        imm = getBits(data, 31, 20);
+        extendImm(11);
         sstream << name << " " << getRName(rd) << "," <<
             getRName(rs1) << "," << std::dec << (int)imm << "\n";
         break;
