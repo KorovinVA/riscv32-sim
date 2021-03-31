@@ -24,6 +24,11 @@ uint64_t ElfReader::getImageSize() const
     return size;
 }
 
+uint64_t ElfReader::getEntryPoint() const
+{
+    return uint64_t(elfio.get_entry());
+}
+
 void ElfReader::load(uint8_t* mem)
 {
     assert(mem != nullptr);

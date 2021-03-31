@@ -17,6 +17,7 @@ public:
 
     ElfReader(const std::string& filename);
     uint64_t getImageSize() const;
+    uint64_t getEntryPoint() const;
     void load(uint8_t* mem);
     ~ElfReader();
 

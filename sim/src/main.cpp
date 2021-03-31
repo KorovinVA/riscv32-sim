@@ -2,6 +2,7 @@
 #include <cstdlib>
 
 #include "../inc/parser.h"
+#include "../inc/converter.h"
 
 int main(int argc, char* argv[])
 {
@@ -14,7 +15,10 @@ int main(int argc, char* argv[])
     try
     {
         Parser parse(argv[1]);
-        parse.parse();
+        std::vector<ISA::Instruction> buf = parse.parse();
+
+        Converter conv(buf);
+        conv.translate();
     }
     catch(const std::string &str)
     {
