@@ -40,11 +40,11 @@ void Converter::translate()
 			std::cout << "end: " << std::hex << bb->endPc << std::endl;
 			for (uint32_t pc = bb->startPc; pc <= bb->endPc; pc += 4)
 			{
-			    emitInst(insts[getInstructionIdx(pc)]);
+			    emitInst(insts[getInstructionIdx(pc)], f->second.function->getArg(0));
 			}
 		}
 		count++;
-		if(count == 2)
+		if(count == 3)
 			break;
 	}
 	/*for (auto inst : insts)
@@ -53,6 +53,106 @@ void Converter::translate()
 	}*/
 	module->print(llvm::errs(), nullptr);
 }
+
+void Converter::emitInst(ISA::Instruction inst, Value* pBuff)
+{
+	SmallVector<Value*, 3> srcs;
+	switch (inst.getType())
+	{
+	case ISA::TYPE::R:
+		srcs[0] = getRegValue(inst.getRs1());
+		srcs[1] = getRegValue(inst.getRs2());
+		break;
+	case ISA::TYPE::I:
+	case ISA::TYPE::SR:
+		srcs[0] = getRegValue(inst.getRs1());
+		srcs[1] = getConstant(inst.getImm());
+		break;
+	case ISA::TYPE::S:
+	case ISA::TYPE::B:
+		srcs[0] = getRegValue(inst.getRs1());
+		srcs[1] = getRegValue(inst.getRs2());
+		srcs[2] = getConstant(inst.getImm());
+		break;
+	case ISA::TYPE::U:
+	case ISA::TYPE::J:
+		srcs[0] = getConstant(inst.getImm());
+		break;
+	case ISA::TYPE::N:
+		break;
+	default:
+        throw std::string("Unknown instruction type!");
+	}
+
+	std::cout << inst.getName() << std::endl;
+	Value* addr = nullptr;
+	Value* dst = nullptr;
+	switch (inst.getOp())
+	{
+	case ISA::OP::JAL:
+	{
+		if (inst.getRd() == 1)
+		{
+			uint32_t fAddr = inst.getPc() + inst.getImm();
+			auto func = fmap.find(fAddr);
+			if (func == fmap.end())
+			{
+				throw std::string("Function is not in map! Addr: " + std::to_string(fAddr));
+			}
+			builder->CreateCall(func->second.function, { pBuff });
+
+			dst = builder->CreateAdd(getConstant(inst.getPc()), getConstant(4));
+			storeRegValue(dst, inst.getRd());
+		}
+		else
+		{
+			throw std::string("Jal not supported: " + inst.getName());
+		}
+		break;
+	}
+	case ISA::OP::LW:
+	{
+		Value* offset = builder->CreateAdd(srcs[0], srcs[1]);
+		addr = builder->CreateBitCast(pBuff, Type::getInt32PtrTy(*context));
+		addr = builder->CreateGEP(addr, offset);
+		dst = builder->CreateLoad(addr);
+	}
+	case ISA::OP::SW:
+		addr = builder->CreateBitCast(pBuff, Type::getInt32PtrTy(*context));
+		dst = srcs[1];
+		break;
+	case ISA::OP::ADDI:
+		dst = builder->CreateAdd(srcs[0], srcs[1]);
+		break;
+	case ISA::OP::EBREAK:
+	case ISA::OP::ECALL:
+		builder->CreateRetVoid();
+		break;
+	default:
+		throw std::string("Unknown instruction!\n" + inst.getName());
+	}
+
+	switch (inst.getType())
+	{
+	case ISA::TYPE::I:
+		storeRegValue(dst, inst.getRd());
+		break;
+	case ISA::TYPE::S:
+	{
+		Value* offset = builder->CreateAdd(srcs[0], srcs[2]);
+		addr = builder->CreateGEP(addr, offset);
+		builder->CreateStore(addr, dst);
+		break;
+	}
+	case ISA::TYPE::J:
+		break;
+	case ISA::TYPE::N:
+		break;
+	default:
+		throw std::string("Unknown instruction type!");
+	}
+}
+
 
 void Converter::createFunctions()
 {
@@ -78,7 +178,7 @@ void Converter::createFunctions()
 			}
 		}
 	}
-	
+
 	std::vector<uint32_t> fAddresses;
 	for (auto f : fmap)
 	{
@@ -90,7 +190,7 @@ void Converter::createFunctions()
 	{
 		// Find function borders
 		uint32_t start = f->first;
-		uint32_t end   = f->first + 4;
+		uint32_t end = f->first + 4;
 		for (uint32_t i = 0; i < fAddresses.size(); ++i)
 		{
 			if (start < fAddresses[i])
@@ -127,7 +227,7 @@ void Converter::createJumpTable(FINfo* func, uint32_t startPc, uint32_t endPc)
 
 			isNewBB = false;
 		}
-		
+
 		ISA::OP opCode = insts[i].getOp();
 		if (opCode == ISA::OP::JALR || opCode == ISA::OP::ECALL || opCode == ISA::OP::EBREAK)
 		{
@@ -160,7 +260,7 @@ void Converter::createJumpTable(FINfo* func, uint32_t startPc, uint32_t endPc)
 			(insts[lastInstIdx].getType() == ISA::TYPE::J && insts[lastInstIdx].getRd() == 0))
 		{
 			uint32_t jump = insts[lastInstIdx].getPc() + insts[lastInstIdx].getImm();
-			
+
 			bool bJumpHandle = false;
 			for (auto it : blocks)
 			{
@@ -170,7 +270,7 @@ void Converter::createJumpTable(FINfo* func, uint32_t startPc, uint32_t endPc)
 					break;
 				}
 			}
-			
+
 			if (bJumpHandle == false)
 			{
 				for (auto it = blocks.begin(); it != blocks.end(); ++it)
@@ -182,7 +282,7 @@ void Converter::createJumpTable(FINfo* func, uint32_t startPc, uint32_t endPc)
 						bbBeforeJump.startPc = it->startPc;
 						bbBeforeJump.endPc = jump - 4;
 						bbBeforeJump.isPseudoJump = true;
-						
+
 						it->startPc = jump;
 						blocks.insert(it, bbBeforeJump);
 						bJumpHandle = true;
@@ -207,48 +307,6 @@ void Converter::createJumpTable(FINfo* func, uint32_t startPc, uint32_t endPc)
 	std::cout << std::endl;*/
 }
 
-void Converter::emitInst(ISA::Instruction inst)
-{
-	SmallVector<Value*, 3> srcs;
-	switch (inst.getType())
-	{
-	case ISA::TYPE::R:
-		srcs[0] = getRegValue(inst.getRs1());
-		srcs[1] = getRegValue(inst.getRs2());
-		break;
-	case ISA::TYPE::I:
-	case ISA::TYPE::SR:
-		srcs[0] = getRegValue(inst.getRs1());
-		srcs[1] = getConstant(inst.getImm());
-		break;
-	case ISA::TYPE::S:
-	case ISA::TYPE::B:
-		srcs[0] = getRegValue(inst.getRs1());
-		srcs[1] = getRegValue(inst.getRs2());
-		srcs[2] = getConstant(inst.getImm());
-		break;
-	case ISA::TYPE::U:
-	case ISA::TYPE::J:
-		srcs[0] = getConstant(inst.getImm());
-		break;
-	case ISA::TYPE::N:
-		break;
-	default:
-        throw std::string("Unknown instruction type!");
-	}
-
-	std::cout << inst.getName() << std::endl;
-	switch (inst.getOp())
-	{
-	case ISA::OP::EBREAK:
-	case ISA::OP::ECALL:
-		builder->CreateRetVoid();
-		break;
-	default:
-		break;
-	}
-}
-
 int Converter::getInstructionIdx(uint32_t pc) const
 {
 	int instIdx = -1;
@@ -261,6 +319,15 @@ int Converter::getInstructionIdx(uint32_t pc) const
 		}
 	}
 	return instIdx;
+}
+
+void Converter::storeRegValue(Value* dst, uint32_t rd)
+{
+	if (rd != 0 && dst != nullptr)
+	{
+		Value* ptr = builder->CreateGEP(regFile, { getConstant(0), getConstant(rd) });
+		builder->CreateStore(dst, ptr);
+	}
 }
 
 Value* Converter::getRegValue(uint32_t n)

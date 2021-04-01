@@ -33,8 +33,9 @@ public:
 private:
     void createFunctions();
     void createJumpTable(FINfo* f, uint32_t startPc, uint32_t endPc);
-    void emitInst(ISA::Instruction inst);
+    void emitInst(ISA::Instruction inst, llvm::Value* pBuff);
     int getInstructionIdx(uint32_t pc) const;
+    void storeRegValue(llvm::Value* dst, uint32_t rd);
     llvm::Value* getRegValue(uint32_t n);
     llvm::Value* getConstant(uint32_t imm);
     llvm::Function* createFunction(const std::string& name);
