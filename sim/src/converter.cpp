@@ -27,7 +27,6 @@ Converter::Converter(std::vector<ISA::Instruction>& instBuff) :
 
 void Converter::translate()
 {
-	int count = 0;
 	for (auto f = fmap.begin(); f != fmap.end(); ++f)
 	{
 		for (auto bb = f->second.bbinfo.begin(); bb != f->second.bbinfo.end(); ++bb)
@@ -37,25 +36,37 @@ void Converter::translate()
 		for (auto bb = f->second.bbinfo.begin(); bb != f->second.bbinfo.end(); ++bb)
 		{
 			builder->SetInsertPoint(bb->block);
-			std::cout << "end: " << std::hex << bb->endPc << std::endl;
 			for (uint32_t pc = bb->startPc; pc <= bb->endPc; pc += 4)
 			{
-			    emitInst(insts[getInstructionIdx(pc)], f->second.function->getArg(0));
+			    emitInst(insts[getInstructionIdx(pc)], &(f->second));
+			}
+			if (bb->isPseudoJump)
+			{
+				createBranch(bb->endPc + 4, &(f->second));
 			}
 		}
-		count++;
-		if(count == 3)
-			break;
 	}
-	/*for (auto inst : insts)
+
+	// Add return to _start func
+	auto start = fmap.find(0x103cc);
+	BasicBlock* oneBB = start->second.bbinfo.front().block;
+	builder->SetInsertPoint(oneBB);
+	builder->CreateRetVoid();
+
+	for (auto f = fmap.begin(); f != fmap.end(); ++f)
 	{
-		emitInst(inst);
-	}*/
-	module->print(llvm::errs(), nullptr);
+		verifyFunction(*(f->second.function), &errs());
+	}
+	std::error_code er;
+	module->print(raw_fd_ostream(StringRef("D:/Users/vkorovin/riscv32-sim/ir.ll"), er), nullptr);
 }
 
-void Converter::emitInst(ISA::Instruction inst, Value* pBuff)
+void Converter::emitInst(ISA::Instruction inst, FINfo* currentF)
 {
+	Value* pBuff = currentF->function->getArg(0);
+	Value* addr = nullptr;
+	Value* dst = nullptr;
+	Value* cond = nullptr;
 	SmallVector<Value*, 3> srcs;
 	switch (inst.getType())
 	{
@@ -84,25 +95,29 @@ void Converter::emitInst(ISA::Instruction inst, Value* pBuff)
         throw std::string("Unknown instruction type!");
 	}
 
-	std::cout << inst.getName() << std::endl;
-	Value* addr = nullptr;
-	Value* dst = nullptr;
 	switch (inst.getOp())
 	{
+	case::ISA::OP::LUI:
+		dst = builder->CreateShl(srcs[0], 12);
+		break;
 	case ISA::OP::JAL:
 	{
 		if (inst.getRd() == 1)
 		{
 			uint32_t fAddr = inst.getPc() + inst.getImm();
-			auto func = fmap.find(fAddr);
-			if (func == fmap.end())
+			auto proc = fmap.find(fAddr);
+			if (proc == fmap.end())
 			{
 				throw std::string("Function is not in map! Addr: " + std::to_string(fAddr));
 			}
-			builder->CreateCall(func->second.function, { pBuff });
+			builder->CreateCall(proc->second.function, { pBuff });
 
 			dst = builder->CreateAdd(getConstant(inst.getPc()), getConstant(4));
 			storeRegValue(dst, inst.getRd());
+		}
+		else if (inst.getRd() == 0)
+		{
+			createBranch(inst.getImm() + inst.getPc(), currentF);
 		}
 		else
 		{
@@ -110,21 +125,69 @@ void Converter::emitInst(ISA::Instruction inst, Value* pBuff)
 		}
 		break;
 	}
+	case ISA::OP::JALR:
+	{
+		if (inst.getImm() == 0)
+		{
+			dst = getConstant(inst.getImm() + inst.getPc());
+			storeRegValue(dst, inst.getRd());
+			builder->CreateRetVoid();
+		}
+		else
+		{
+			throw std::string("Jalr not supported: " + inst.getName());
+		}
+		return;
+	}
+	case ISA::OP::BEQ:
+		cond = builder->CreateICmpEQ(srcs[0], srcs[1]);
+		break;
+	case ISA::OP::BNE:
+		cond = builder->CreateICmpNE(srcs[0], srcs[1]);
+		break;
+	case ISA::OP::BGE:
+		cond = builder->CreateICmpSGE(srcs[0], srcs[1]);
+		break;
+	case ISA::OP::BLT:
+		cond = builder->CreateICmpSLT(srcs[0], srcs[1]);
+		break;
 	case ISA::OP::LW:
 	{
 		Value* offset = builder->CreateAdd(srcs[0], srcs[1]);
 		addr = builder->CreateBitCast(pBuff, Type::getInt32PtrTy(*context));
 		addr = builder->CreateGEP(addr, offset);
 		dst = builder->CreateLoad(addr);
+		break;
 	}
 	case ISA::OP::SW:
 		addr = builder->CreateBitCast(pBuff, Type::getInt32PtrTy(*context));
 		dst = srcs[1];
 		break;
 	case ISA::OP::ADDI:
+	case ISA::OP::ADD:
 		dst = builder->CreateAdd(srcs[0], srcs[1]);
 		break;
+	case ISA::OP::SLTIU:
+		dst = builder->CreateICmpULT(srcs[0], srcs[1]);
+		dst = builder->CreateZExt(dst, Type::getInt32Ty(*context));
+		break;
+	case ISA::OP::ANDI:
+	case ISA::OP::AND:
+		dst = builder->CreateAnd(srcs[0], srcs[1]);
+		break;
+	case ISA::OP::SLLI:
+		dst = builder->CreateShl(srcs[0], inst.getImm());
+		break;
+	case ISA::OP::SUB:
+		dst = builder->CreateSub(srcs[0], srcs[1]);
+		break;
 	case ISA::OP::EBREAK:
+	{
+		Function* trap = Intrinsic::getDeclaration(module.get(), Intrinsic::debugtrap);
+		builder->CreateCall(trap, std::initializer_list<Value*>{});
+		builder->CreateRetVoid();
+		break;
+	}
 	case ISA::OP::ECALL:
 		builder->CreateRetVoid();
 		break;
@@ -134,14 +197,25 @@ void Converter::emitInst(ISA::Instruction inst, Value* pBuff)
 
 	switch (inst.getType())
 	{
+	case ISA::TYPE::B:
+	{
+		createBranch(inst.getImm() + inst.getPc(), 
+					 currentF,
+					 inst.getPc() + 4,
+					 cond);
+		break;
+	}
+	case ISA::TYPE::U:
+	case ISA::TYPE::R:
 	case ISA::TYPE::I:
+	case ISA::TYPE::SR:
 		storeRegValue(dst, inst.getRd());
 		break;
 	case ISA::TYPE::S:
 	{
 		Value* offset = builder->CreateAdd(srcs[0], srcs[2]);
 		addr = builder->CreateGEP(addr, offset);
-		builder->CreateStore(addr, dst);
+		builder->CreateStore(dst, addr);
 		break;
 	}
 	case ISA::TYPE::J:
@@ -305,6 +379,49 @@ void Converter::createJumpTable(FINfo* func, uint32_t startPc, uint32_t endPc)
 			it.endPc << " " << it.isPseudoJump << std::endl;
 	}
 	std::cout << std::endl;*/
+}
+
+void Converter::createBranch(uint32_t jump, FINfo* func, uint32_t passBy, Value* cond)
+{
+	BasicBlock* jBlock = nullptr;
+	BasicBlock* passBlock = nullptr;
+	for (auto bb = func->bbinfo.begin(); bb != func->bbinfo.end(); ++bb)
+	{
+		if (jump == bb->startPc)
+		{
+			jBlock = bb->block;
+			break;
+		}
+	}
+	if (jBlock == nullptr)
+	{
+		throw std::string("Basic block wasn't found. Pc: " + std::to_string(jump));
+	}
+	
+	if (cond)
+	{
+		for (auto bb = func->bbinfo.begin(); bb != func->bbinfo.end(); ++bb)
+		{
+			if (passBy == bb->startPc)
+			{
+				passBlock = bb->block;
+				break;
+			}
+		}
+		if (passBlock == nullptr)
+		{
+			throw std::string("Basic block wasn't found. Pc: " + std::to_string(passBy));
+		}
+	}
+
+	if (cond)
+	{
+		builder->CreateCondBr(cond, jBlock, passBlock);
+	}
+	else
+	{
+		builder->CreateBr(jBlock);
+	}
 }
 
 int Converter::getInstructionIdx(uint32_t pc) const

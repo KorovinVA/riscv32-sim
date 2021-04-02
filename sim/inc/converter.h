@@ -33,12 +33,15 @@ public:
 private:
     void createFunctions();
     void createJumpTable(FINfo* f, uint32_t startPc, uint32_t endPc);
-    void emitInst(ISA::Instruction inst, llvm::Value* pBuff);
+    void emitInst(ISA::Instruction inst, FINfo* currentF);
+
+    // helpers
+    void createBranch(uint32_t jump, FINfo* func, uint32_t passBy = 0, llvm::Value* cond = nullptr);
     int getInstructionIdx(uint32_t pc) const;
+    llvm::Function* createFunction(const std::string& name);
     void storeRegValue(llvm::Value* dst, uint32_t rd);
     llvm::Value* getRegValue(uint32_t n);
     llvm::Value* getConstant(uint32_t imm);
-    llvm::Function* createFunction(const std::string& name);
 
     const static int REGISTER_NUM = 32;
     std::vector<ISA::Instruction> insts;
