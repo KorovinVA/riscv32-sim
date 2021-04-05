@@ -77,8 +77,8 @@ void Converter::translate()
 	{
 		verifyFunction(*(f->second.function), &errs());
 	}
-	std::error_code er;
-	module->print(raw_fd_ostream(StringRef("D:/Users/vkorovin/riscv32-sim/ir.ll"), er), nullptr);
+	//std::error_code er;
+ 	//module->print(raw_fd_ostream(StringRef("D:/Users/vkorovin/riscv32-sim/ir.ll"), er), nullptr);
 }
 
 void Converter::emitInst(ISA::Instruction inst, FINfo* currentF)
