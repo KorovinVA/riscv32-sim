@@ -1,7 +1,7 @@
 ; ModuleID = 'converter'
 source_filename = "converter"
 
-@RegFile = private global [32 x i32] zeroinitializer, align 8
+@RegFile = private global [32 x i32] zeroinitializer, align 4
 
 define void @entry(i8* %pBuff) {
 entry:

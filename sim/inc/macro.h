@@ -1,0 +1,11 @@
+#define EBREAK_OPCODE   0x00100073
+#define ECALL_OPCODE    0x00000073
+
+#define END_ADDRESS     0x10780
+#define EXIT_ADDRESS    0x109bc
+#define ABORT_ADDRESS   0x101b8
+
+#define GP_INITIAL      533368
+#define SP_INITIAL      5000
+
+#define REGISTER_NUMBER 32

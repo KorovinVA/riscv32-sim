@@ -8,7 +8,7 @@ Parser::Parser(const std::string& elfFile):
 	elf.load(data);
 	entryP = elf.getEntryPoint();
 
-	disasm.open("D:/Users/vkorovin/riscv32-sim/disasm.asm");
+	disasm.open("disasm.asm");
 }
 
 std::vector<ISA::Instruction> Parser::parse()
@@ -19,14 +19,7 @@ std::vector<ISA::Instruction> Parser::parse()
 	uint32_t* intData = (uint32_t*)data;
 	disasm << text.name << "\n";
 
-	/*std::cout << *(intData + ((405504 + 1312) >> 2)) << std::endl;
-	std::cout << *(intData + (405504 + 1312) / 4 + 1) << std::endl;
-	std::cout << *(intData + (405504 + 1312) / 4 + 2) << std::endl;
-	std::cout << *(intData + (405504 + 1312) / 4 + 3) << std::endl;
-	std::cout << *(intData + (405504 + 1312) / 4 + 4) << std::endl;*/
-
-
-	for (pc = entryP / 4; pc <= endP / 4; ++pc)
+	for (pc = entryP / 4; pc <= END_ADDRESS / 4; ++pc)
 	{
 		ISA::Instruction inst(*(intData + pc), pc * 4);
 		instBuff.push_back(inst);
@@ -34,9 +27,10 @@ std::vector<ISA::Instruction> Parser::parse()
 		disasm << inst.getName();
 	}
 
-	pc = exitP / 4;
+	pc = EXIT_ADDRESS / 4;
 	CreatePseudoExit(&instBuff, &pc, &disasm);
-	pc = text.addr / 4;
+
+	pc = ABORT_ADDRESS / 4;
 	CreatePseudoAbort(&instBuff, &pc, &disasm);
 
 	return instBuff;
@@ -50,7 +44,7 @@ Parser::~Parser()
 
 void Parser::CreatePseudoAbort(std::vector<ISA::Instruction>* instbuff, uint64_t* pc, std::ofstream* disasm)
 {
-	ISA::Instruction inst(EBREAK, *pc * 4);
+	ISA::Instruction inst(EBREAK_OPCODE, *pc * 4);
 	instBuff.push_back(inst);
 	++(*pc);
 	*disasm << inst.getName();
@@ -58,7 +52,7 @@ void Parser::CreatePseudoAbort(std::vector<ISA::Instruction>* instbuff, uint64_t
 
 void Parser::CreatePseudoExit(std::vector<ISA::Instruction>* instbuff, uint64_t* pc, std::ofstream* disasm)
 {
-	ISA::Instruction inst(ECALL, *pc * 4);
+	ISA::Instruction inst(ECALL_OPCODE, *pc * 4);
 	instBuff.push_back(inst);
 	++(*pc);
 	*disasm << inst.getName();

@@ -11,6 +11,7 @@
 #pragma warning(pop)
 
 #include "instruction.h"
+#include "macro.h"
 
 class Converter
 {
@@ -28,33 +29,32 @@ class Converter
         std::list<BBInfo> bbinfo;
     };
 public:
-    Converter(std::vector<ISA::Instruction>& instBuff, uint8_t* data, uint32_t dataSize);
-	void translate();
+    Converter(std::vector<ISA::Instruction>& instBuff, uint8_t* data, uint32_t dataSize, uint32_t entryPoint);
+    void translate();
 private:
     void createFunctions();
-    void createJumpTable(FINfo* f, uint32_t startPc, uint32_t endPc);
-    void emitInst(ISA::Instruction inst, FINfo* currentF);
-
-    // helpers
-    void createBranch(uint32_t jump, FINfo* func, uint32_t passBy = 0, llvm::Value* cond = nullptr);
-    int getInstructionIdx(uint32_t pc) const;
     llvm::Function* createFunction(const std::string& name);
+    void createJumpTable(FINfo* f, uint32_t startPc, uint32_t endPc);
+    void createBranch(uint32_t jump, FINfo* func, uint32_t passBy = 0, llvm::Value* cond = nullptr);
+
+    void emitInst(ISA::Instruction inst, FINfo* currentF);
+    int getInstructionIdx(uint32_t pc) const;
+
     void storeRegValue(llvm::Value* dst, uint32_t rd);
     llvm::Value* getRegValue(uint32_t n);
     llvm::Value* getConstant(uint32_t imm);
 
-    const static int REGISTER_NUM = 32;
     std::vector<ISA::Instruction> insts;
 
     std::unique_ptr<llvm::LLVMContext> context;
     std::unique_ptr<llvm::Module> module;
     std::unique_ptr<llvm::IRBuilder<>> builder;
 
-    llvm::FunctionType* fType = nullptr;
-    llvm::Function* entryF = nullptr;
+    llvm::FunctionType* fType;
+    llvm::Function* entryF;
     std::map<uint32_t, FINfo> fmap;
+    uint32_t entryP;
 
-    llvm::Value* buffer;
     llvm::GlobalVariable* regFile;
 };
 

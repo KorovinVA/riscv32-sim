@@ -4,7 +4,10 @@
 
 using namespace llvm;
 
-Converter::Converter(std::vector<ISA::Instruction>& instBuff, uint8_t* data, uint32_t dataSize) :
+Converter::Converter(std::vector<ISA::Instruction>& instBuff,
+           	     uint8_t* data, 
+		     uint32_t dataSize,
+		     uint32_t entryPoint) :
 	insts(instBuff),
 	fmap()
 {
@@ -16,25 +19,26 @@ Converter::Converter(std::vector<ISA::Instruction>& instBuff, uint8_t* data, uin
 	fType = FunctionType::get(Type::getVoidTy(*context), argType, false);
 
 	// Create regFile
-	llvm::ArrayType* regFileTy = ArrayType::get(builder->getInt32Ty(), REGISTER_NUM);
+	llvm::ArrayType* regFileTy = ArrayType::get(builder->getInt32Ty(), REGISTER_NUMBER);
 	module->getOrInsertGlobal("RegFile", regFileTy);
 	regFile = module->getNamedGlobal("RegFile");
 	regFile->setLinkage(GlobalValue::PrivateLinkage);
-	regFile->setAlignment(MaybeAlign(8));
+	regFile->setAlignment(MaybeAlign(4));
 	regFile->setInitializer(ConstantAggregateZero::get(regFileTy));
 
 	// Create all functions
 	entryF = createFunction("entry");
 	createFunctions();
+        entryP = entryPoint;
 
 	// Store "random" values into sp adn gp
 	BasicBlock* entryBB = BasicBlock::Create(*context, "entry", entryF);
 	builder->SetInsertPoint(entryBB);
-	storeRegValue(getConstant(5000), 2);
-	storeRegValue(getConstant(533368), 3);
+	storeRegValue(getConstant(SP_INITIAL), 2);
+	storeRegValue(getConstant(GP_INITIAL), 3);
 
 	// Create our memory file
-	std::ofstream outfile("D:/Users/vkorovin/riscv32-sim/mem", std::ios::binary | std::ios::out);
+	std::ofstream outfile("mem", std::ios::binary | std::ios::out);
 	outfile.write((char*)data, dataSize);
 	outfile.close();
 }
@@ -56,13 +60,13 @@ void Converter::translate()
 			}
 			if (bb->isPseudoJump)
 			{
-				createBranch(bb->endPc + 4, &(f->second));
+			    createBranch(bb->endPc + 4, &(f->second));
 			}
 		}
 	}
 
 	// Add return to _start func
-	auto start = fmap.find(0x103cc);
+	auto start = fmap.find(entryP);
 	BasicBlock* oneBB = start->second.bbinfo.front().block;
 	builder->SetInsertPoint(oneBB);
 	builder->CreateRetVoid();
@@ -77,8 +81,10 @@ void Converter::translate()
 	{
 		verifyFunction(*(f->second.function), &errs());
 	}
-	//std::error_code er;
- 	//module->print(raw_fd_ostream(StringRef("D:/Users/vkorovin/riscv32-sim/ir.ll"), er), nullptr);
+
+	std::error_code er;
+	raw_fd_ostream llofstream(StringRef("ir.ll"), er);
+	module->print(llofstream, nullptr);
 }
 
 void Converter::emitInst(ISA::Instruction inst, FINfo* currentF)
@@ -176,7 +182,7 @@ void Converter::emitInst(ISA::Instruction inst, FINfo* currentF)
 		offset = builder->CreateLShr(offset, 2);
 		Value* addr = builder->CreateBitCast(pBuff, Type::getInt32PtrTy(*context));
 		addr = builder->CreateGEP(addr, offset);
-		dst = builder->CreateLoad(addr);
+		dst = builder->CreateLoad(Type::getInt32Ty(*context), addr);
 		break;
 	}
 	case ISA::OP::SW:
@@ -369,7 +375,7 @@ void Converter::createJumpTable(FINfo* func, uint32_t startPc, uint32_t endPc)
 				{
 					if (jump > it->startPc && jump <= it->endPc)
 					{
-						// Jump was into bb. Split bb.
+						// Jump was into bb. Split bb
 						BBInfo bbBeforeJump;
 						bbBeforeJump.startPc = it->startPc;
 						bbBeforeJump.endPc = jump - 4;
@@ -458,7 +464,7 @@ int Converter::getInstructionIdx(uint32_t pc) const
 
 void Converter::storeRegValue(Value* dst, uint32_t rd)
 {
-	if (rd > 31)
+	if (rd > REGISTER_NUMBER)
 	{
 		throw std::string("Invalid register number!");
 	}
@@ -471,13 +477,13 @@ void Converter::storeRegValue(Value* dst, uint32_t rd)
 
 Value* Converter::getRegValue(uint32_t n)
 {
-	if (n > 31)
+	if (n >= REGISTER_NUMBER)
 	{
 		throw std::string("Invalid register number!");
 	}
 
 	Value* ptr = builder->CreateGEP(regFile, { getConstant(0), getConstant(n) });
-	return builder->CreateLoad(ptr);
+	return builder->CreateLoad(Type::getInt32Ty(*context), ptr);
 }
 
 llvm::Value* Converter::getConstant(uint32_t imm)

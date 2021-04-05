@@ -34,7 +34,8 @@ set(SRC          sim/src/main.cpp
                  sim/inc/instruction.h
                  sim/inc/parser.h
                  sim/inc/readelf.h
-		 sim/inc/converter.h)
+		 sim/inc/converter.h
+		 sim/inc/macro.h)
 add_executable(riscv ${ELFIO} ${SRC})
 
 target_include_directories(riscv PRIVATE ELFIO/)

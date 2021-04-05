@@ -107,14 +107,14 @@ namespace ISA {
         }
 
         std::stringstream sstream;
-        sstream << std::hex << pc << ":\t";
+        sstream << std::hex << pc << ":\t" << name << " ";
         switch (type)
         {
         case ISA::TYPE::R:
             rd = getBits(data, 11, 7);
             rs1 = getBits(data, 19, 15);
             rs2 = getBits(data, 24, 20);
-            sstream << name << " " << getRName(rd) << "," <<
+            sstream << getRName(rd) << "," <<
                 getRName(rs1) << "," << getRName(rs2) << "\n";
             break;
         case ISA::TYPE::I:
@@ -122,7 +122,7 @@ namespace ISA {
             rs1 = getBits(data, 19, 15);
             imm = getBits(data, 31, 20);
             extendImm(11);
-            sstream << name << " " << getRName(rd) << "," <<
+            sstream << getRName(rd) << "," <<
                 getRName(rs1) << "," << std::dec << (int)imm << "\n";
             break;
         case ISA::TYPE::S:
@@ -136,7 +136,7 @@ namespace ISA {
             imm = imm4_0 + (imm11_5 << 5);
             extendImm(11);
 
-            sstream << name << " " << getRName(rs2) << "," << std::dec << (int)imm << "(" <<
+            sstream << getRName(rs2) << "," << std::dec << (int)imm << "(" <<
                 getRName(rs1) << ")" << "\n";
             break;
         }
@@ -153,14 +153,14 @@ namespace ISA {
             imm = (imm4_1 << 1) + (imm10_5 << 5) + (imm11 << 11) + (imm12 << 12);
             extendImm(12);
 
-            sstream << name << " " << getRName(rs1) <<
+            sstream << getRName(rs1) <<
                 "," << getRName(rs2) << "," << uint32_t(pc) + imm << "\n";
             break;
         }
         case ISA::TYPE::U:
             rd = getBits(data, 11, 7);
             imm = getBits(data, 31, 12);
-            sstream << name << " " << getRName(rd) << ",0x" << (int)imm << "\n";
+            sstream << getRName(rd) << ",0x" << (int)imm << "\n";
             break;
         case::ISA::TYPE::J:
         {
@@ -173,7 +173,7 @@ namespace ISA {
             imm = imm0_10 + (imm11_11 << 11) + (imm19_12 << 12) + (imm20_20 << 20);
 
             extendImm(20);
-            sstream << name << " " << getRName(rd) << "," << imm + (uint32_t)pc << "\n";
+            sstream << getRName(rd) << "," << imm + (uint32_t)pc << "\n";
             break;
         }
         case::ISA::TYPE::SR:
@@ -181,11 +181,11 @@ namespace ISA {
             rs1 = getBits(data, 19, 15);
             imm = getBits(data, 24, 20);
 
-            sstream << name << " " << getRName(rd) << "," <<
+            sstream << getRName(rd) << "," <<
                 getRName(rs1) << ",0x" << imm << "\n";
             break;
         case::ISA::TYPE::N:
-            sstream << name << "\n";
+            sstream << "\n";
             break;
         default:
             throw std::string("Unknown instruction type!");
