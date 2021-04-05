@@ -1,9 +1,10 @@
 #include "../inc/converter.h"
+#include <fstream>
 #pragma warning(push, 0)
 
 using namespace llvm;
 
-Converter::Converter(std::vector<ISA::Instruction>& instBuff) :
+Converter::Converter(std::vector<ISA::Instruction>& instBuff, uint8_t* data, uint32_t dataSize) :
 	insts(instBuff),
 	fmap()
 {
@@ -22,7 +23,20 @@ Converter::Converter(std::vector<ISA::Instruction>& instBuff) :
 	regFile->setAlignment(MaybeAlign(8));
 	regFile->setInitializer(ConstantAggregateZero::get(regFileTy));
 
+	// Create all functions
+	entryF = createFunction("entry");
 	createFunctions();
+
+	// Store "random" values into sp adn gp
+	BasicBlock* entryBB = BasicBlock::Create(*context, "entry", entryF);
+	builder->SetInsertPoint(entryBB);
+	storeRegValue(getConstant(5000), 2);
+	storeRegValue(getConstant(533368), 3);
+
+	// Create our memory file
+	std::ofstream outfile("D:/Users/vkorovin/riscv32-sim/mem", std::ios::binary | std::ios::out);
+	outfile.write((char*)data, dataSize);
+	outfile.close();
 }
 
 void Converter::translate()
@@ -53,6 +67,12 @@ void Converter::translate()
 	builder->SetInsertPoint(oneBB);
 	builder->CreateRetVoid();
 
+	// finish up entry func
+	builder->SetInsertPoint(&(entryF->getEntryBlock()));
+	builder->CreateCall(start->second.function, { entryF->getArg(0) });
+	builder->CreateRetVoid();
+
+	verifyFunction(*(entryF), &errs());
 	for (auto f = fmap.begin(); f != fmap.end(); ++f)
 	{
 		verifyFunction(*(f->second.function), &errs());
@@ -64,7 +84,6 @@ void Converter::translate()
 void Converter::emitInst(ISA::Instruction inst, FINfo* currentF)
 {
 	Value* pBuff = currentF->function->getArg(0);
-	Value* addr = nullptr;
 	Value* dst = nullptr;
 	Value* cond = nullptr;
 	SmallVector<Value*, 3> srcs;
@@ -154,15 +173,21 @@ void Converter::emitInst(ISA::Instruction inst, FINfo* currentF)
 	case ISA::OP::LW:
 	{
 		Value* offset = builder->CreateAdd(srcs[0], srcs[1]);
-		addr = builder->CreateBitCast(pBuff, Type::getInt32PtrTy(*context));
+		offset = builder->CreateLShr(offset, 2);
+		Value* addr = builder->CreateBitCast(pBuff, Type::getInt32PtrTy(*context));
 		addr = builder->CreateGEP(addr, offset);
 		dst = builder->CreateLoad(addr);
 		break;
 	}
 	case ISA::OP::SW:
-		addr = builder->CreateBitCast(pBuff, Type::getInt32PtrTy(*context));
-		dst = srcs[1];
+	{
+		Value* offset = builder->CreateAdd(srcs[0], srcs[2]);
+		offset = builder->CreateLShr(offset, 2);
+		Value* addr = builder->CreateBitCast(pBuff, Type::getInt32PtrTy(*context));
+		addr = builder->CreateGEP(addr, offset);
+		builder->CreateStore(srcs[1], addr);
 		break;
+	}
 	case ISA::OP::ADDI:
 	case ISA::OP::ADD:
 		dst = builder->CreateAdd(srcs[0], srcs[1]);
@@ -212,14 +237,7 @@ void Converter::emitInst(ISA::Instruction inst, FINfo* currentF)
 		storeRegValue(dst, inst.getRd());
 		break;
 	case ISA::TYPE::S:
-	{
-		Value* offset = builder->CreateAdd(srcs[0], srcs[2]);
-		addr = builder->CreateGEP(addr, offset);
-		builder->CreateStore(dst, addr);
-		break;
-	}
 	case ISA::TYPE::J:
-		break;
 	case ISA::TYPE::N:
 		break;
 	default:
@@ -440,7 +458,11 @@ int Converter::getInstructionIdx(uint32_t pc) const
 
 void Converter::storeRegValue(Value* dst, uint32_t rd)
 {
-	if (rd != 0 && dst != nullptr)
+	if (rd > 31)
+	{
+		throw std::string("Invalid register number!");
+	}
+	if (rd != 0)
 	{
 		Value* ptr = builder->CreateGEP(regFile, { getConstant(0), getConstant(rd) });
 		builder->CreateStore(dst, ptr);

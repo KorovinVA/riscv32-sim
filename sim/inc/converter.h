@@ -28,7 +28,7 @@ class Converter
         std::list<BBInfo> bbinfo;
     };
 public:
-    Converter(std::vector<ISA::Instruction>& instBuff);
+    Converter(std::vector<ISA::Instruction>& instBuff, uint8_t* data, uint32_t dataSize);
 	void translate();
 private:
     void createFunctions();
@@ -51,6 +51,7 @@ private:
     std::unique_ptr<llvm::IRBuilder<>> builder;
 
     llvm::FunctionType* fType = nullptr;
+    llvm::Function* entryF = nullptr;
     std::map<uint32_t, FINfo> fmap;
 
     llvm::Value* buffer;

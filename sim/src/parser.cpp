@@ -19,6 +19,13 @@ std::vector<ISA::Instruction> Parser::parse()
 	uint32_t* intData = (uint32_t*)data;
 	disasm << text.name << "\n";
 
+	/*std::cout << *(intData + ((405504 + 1312) >> 2)) << std::endl;
+	std::cout << *(intData + (405504 + 1312) / 4 + 1) << std::endl;
+	std::cout << *(intData + (405504 + 1312) / 4 + 2) << std::endl;
+	std::cout << *(intData + (405504 + 1312) / 4 + 3) << std::endl;
+	std::cout << *(intData + (405504 + 1312) / 4 + 4) << std::endl;*/
+
+
 	for (pc = entryP / 4; pc <= endP / 4; ++pc)
 	{
 		ISA::Instruction inst(*(intData + pc), pc * 4);
@@ -60,4 +67,14 @@ void Parser::CreatePseudoExit(std::vector<ISA::Instruction>* instbuff, uint64_t*
 uint32_t Parser::getEntryPoint() const
 {
 	return uint32_t(entryP);
+}
+
+uint8_t* Parser::getElfData()
+{
+	return data;
+}
+
+uint32_t Parser::getImageSize() const
+{
+	return uint32_t(elf.getImageSize());
 }

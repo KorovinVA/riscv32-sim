@@ -16,8 +16,9 @@ int main(int argc, char* argv[])
     {
         Parser parse(argv[1]);
         std::vector<ISA::Instruction> buf = parse.parse();
+        uint8_t* elfData = parse.getElfData();
 
-        Converter conv(buf);
+        Converter conv(buf, parse.getElfData(), parse.getImageSize());
         conv.translate();
     }
     catch(const std::string &str)

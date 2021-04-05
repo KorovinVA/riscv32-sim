@@ -9,6 +9,8 @@ class Parser
 public:
     Parser(const std::string& elfFile);
     std::vector<ISA::Instruction> parse();
+    uint8_t* getElfData();
+    uint32_t getImageSize() const;
     ~Parser();
 private:
     void CreatePseudoAbort(std::vector<ISA::Instruction>* instbuff, uint64_t* pc, std::ofstream* disasm);
