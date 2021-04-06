@@ -29,7 +29,11 @@ class Converter
         std::list<BBInfo> bbinfo;
     };
 public:
-    Converter(std::vector<ISA::Instruction>& instBuff, uint8_t* data, uint32_t dataSize, uint32_t entryPoint);
+    Converter(const std::string& outputDir,
+              std::vector<ISA::Instruction>& instBuff,
+	      uint8_t* data,
+	      uint32_t dataSize, 
+	      uint32_t entryPoint);
     void translate();
 private:
     void createFunctions();
@@ -45,6 +49,7 @@ private:
     llvm::Value* getConstant(uint32_t imm);
 
     std::vector<ISA::Instruction> insts;
+    const std::string output;
 
     std::unique_ptr<llvm::LLVMContext> context;
     std::unique_ptr<llvm::Module> module;

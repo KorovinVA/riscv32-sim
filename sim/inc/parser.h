@@ -8,7 +8,7 @@
 class Parser
 {
 public:
-    Parser(const std::string& elfFile);
+    Parser(const std::string& elfFile, const std::string& output);
     std::vector<ISA::Instruction> parse();
     uint8_t* getElfData();
     uint32_t getImageSize() const;

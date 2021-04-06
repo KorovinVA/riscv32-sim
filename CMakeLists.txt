@@ -31,11 +31,13 @@ set(SRC          sim/src/main.cpp
                  sim/src/parser.cpp
                  sim/src/readelf.cpp
 		 sim/src/converter.cpp
+		 sim/src/backend.cpp
                  sim/inc/instruction.h
                  sim/inc/parser.h
                  sim/inc/readelf.h
 		 sim/inc/converter.h
-		 sim/inc/macro.h)
+		 sim/inc/macro.h
+		 sim/inc/backend.h)
 add_executable(riscv ${ELFIO} ${SRC})
 
 target_include_directories(riscv PRIVATE ELFIO/)
@@ -45,6 +47,8 @@ target_link_libraries(riscv libLLVMSupport.a)
 target_link_libraries(riscv libLLVMBinaryFormat.a)
 target_link_libraries(riscv libLLVMBitstreamReader.a)
 target_link_libraries(riscv tinfo)
+
+message(STATUS "EXECUTABLE PATH ${PROJECT_BINARY_DIR}")
 
 foreach(source IN LISTS ELFIO SRC)
     get_filename_component(source_path "${source}" PATH)

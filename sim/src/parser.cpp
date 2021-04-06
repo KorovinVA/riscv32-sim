@@ -1,6 +1,7 @@
+#include  <cstdlib>
 #include "../inc/parser.h"
 
-Parser::Parser(const std::string& elfFile):
+Parser::Parser(const std::string& elfFile, const std::string& output):
     elf(elfFile)
 {
     uint64_t imageSize = elf.getImageSize();
@@ -8,7 +9,7 @@ Parser::Parser(const std::string& elfFile):
     elf.load(data);
     entryP = elf.getEntryPoint();
 
-    disasm.open("disasm.asm");
+    disasm.open(output + "/disasm.asm");
 }
 
 std::vector<ISA::Instruction> Parser::parse()

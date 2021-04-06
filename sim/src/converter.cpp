@@ -4,10 +4,12 @@
 
 using namespace llvm;
 
-Converter::Converter(std::vector<ISA::Instruction>& instBuff,
-                 uint8_t* data, 
-             uint32_t dataSize,
-             uint32_t entryPoint) :
+Converter::Converter(const std::string& outputDir,
+                     std::vector<ISA::Instruction>& instBuff,
+                     uint8_t* data, 
+                     uint32_t dataSize,
+                     uint32_t entryPoint) :
+    output(outputDir),
     insts(instBuff),
     fmap()
 {
@@ -38,7 +40,7 @@ Converter::Converter(std::vector<ISA::Instruction>& instBuff,
     storeRegValue(getConstant(GP_INITIAL), 3);
 
     // Create our memory file
-    std::ofstream outfile("mem", std::ios::binary | std::ios::out);
+    std::ofstream outfile(output + "/mem", std::ios::binary | std::ios::out);
     outfile.write((char*)data, dataSize);
     outfile.close();
 }
@@ -83,7 +85,7 @@ void Converter::translate()
     }
 
     std::error_code er;
-    raw_fd_ostream llofstream(StringRef("ir.ll"), er);
+    raw_fd_ostream llofstream(StringRef(output + "/ir.ll"), er);
     module->print(llofstream, nullptr);
 }
 

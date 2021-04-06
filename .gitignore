@@ -6,3 +6,6 @@ build/
 
 #profiles
 callgrind*
+
+#output directory
+output/
