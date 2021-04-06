@@ -18,7 +18,7 @@ int main(int argc, char* argv[])
     if(projDirEnv == nullptr)
     {
         std::cout << "RISCV32I_SIM is not set!" << std::endl;
-	exit(1);
+        exit(1);
     }
     std::string projDir(projDirEnv);
     std::string outputDir = projDir + "/output";
@@ -30,15 +30,15 @@ int main(int argc, char* argv[])
 
         Converter conv(outputDir,
                        buf,
-		       parse.getElfData(),
-		       parse.getImageSize(),
-		       parse.getEntryPoint());
+                       parse.getElfData(),
+                       parse.getImageSize(),
+                       parse.getEntryPoint());
         conv.translate();
 
-	Backend back(projDir, outputDir);
-	back.run(parse.getImageSize());
+        Backend back(projDir, outputDir);
+        back.run(parse.getImageSize());
 
-	std::cout << "Middle-end was successful! Now you can run: ruby " << outputDir << "/run.rb" << std::endl;
+        std::cout << "Middle-end was successful! Now you can run: ruby " << outputDir << "/run.rb" << std::endl;
     }
     catch(const std::string &str)
     {

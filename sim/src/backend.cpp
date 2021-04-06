@@ -24,14 +24,14 @@ void Backend::run(uint32_t imageSize)
         {
             size_t pos = line.find(toReplace);
             if (pos != std::string::npos)
-	    {
+            {
                 line.replace(pos, toReplace.length(), replacement);
-	    }
-	    else
-	    {
+            }
+            else
+           {
                 break;
-	    }
-	}
+           }
+        }
         cppOut << line << "\n";
     }
 
@@ -55,28 +55,28 @@ void Backend::run(uint32_t imageSize)
         {
             size_t pos = line.find(benchIncludeReplace);
             if (pos != std::string::npos)
-	    {
+            {
                 std::string benchInclude("\"" + bInclude + "\"");
                 line.replace(pos, benchIncludeReplace.length(), benchInclude);
-	    }
-	    else
-	    {
+            }
+            else
+            {
                 break;
-	    }
-	}
-	while(true)
-	{
+            }
+        }
+        while(true)
+        {
             size_t pos = line.find(benchLibReplace);
             if (pos != std::string::npos)
-	    {
+            {
                 std::string benchLib("\"" + bLib + "\"");
                 line.replace(pos, benchLibReplace.length(), benchLib);
-	    }
-	    else
-	    {
+            }
+            else
+            {
                 break;
-	    }
-	}
+            }
+        }
         rbOut << line << "\n";
     }
 }
